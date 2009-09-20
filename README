@@ -1,0 +1,17 @@
+NAME
+
+  bldump - simple decimal, hex dump to text file, CSV ..
+
+SYNOPSYS
+
+  bldump [options] [infile [outfile]]
+  bldump -h
+  bldump --help
+
+DESCRIPTION
+
+  The options are as follows: 
+
+  -h -? --help
+    display command line help message, and exit application.
+

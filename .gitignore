@@ -1,0 +1,10 @@
+*.o
+*.gcov
+*.gcno
+*.gcda
+.depend
+CUnit
+bldump
+bldump-test
+bldump.exe
+bldump-test.exe
