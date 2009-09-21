@@ -5,7 +5,7 @@
 
 #### CONFIGURE
 APP_EXE		:= bldump
-APP_SRC		:= bldump.c
+APP_SRC		:= bldump.c verbose.c
 TEST_EXE	:= $(APP_EXE)-test
 TEST_SRC	:= $(wildcard t-*.c)
 TEST_LIB	:= cunit

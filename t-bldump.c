@@ -7,27 +7,28 @@
 #include <assert.h>
 #include "CUnit/CUnit.h"
 
+#include "verbose.h"
 #include "bldump.h"
 
 FILE *t_stdin, *t_stdout, *t_stderr;
-int t_exit_count;
-int t_exit_code;
-void t_exit(int c) {
-	t_exit_count++;
-	t_exit_code = c;
-}
 
 int ts_bldump_init(void)
 {
+	if ( verbose_out != stdout ) {
+		fprintf( stderr, "Error: verbose_out is not stdout\n" );
+		return 1;
+	}
+
 	t_stdin  = tmpfile();
 	t_stdout = tmpfile();
 	t_stderr = tmpfile();
-	t_exit_count = 0;
+	verbose_out = tmpfile();
 
 	if ( t_stdin == NULL || t_stdout == NULL || t_stderr == NULL ) {
 		fprintf( stderr, "Error: tmpfile() failure - errno = %d.\n", errno );
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -36,6 +37,11 @@ int ts_bldump_cleanup(void)
 	fclose( t_stdin  );
 	fclose( t_stdout );
 	fclose( t_stderr );
+	t_stdin = NULL;
+	t_stdout = NULL;
+	t_stderr = NULL;
+	verbose_out = stdout;
+
 	return 0;
 }
 
@@ -43,29 +49,34 @@ void tc_bldump_options(void)
 {
 	int ret;
 
+	t_exit_code  = -1;
 	t_exit_count = 0;
+
 	/* -h */
 	{
 		char* argv[] = { "bldump", "-h" };
-		main( sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( t_exit_count == 1 );
-		CU_ASSERT( t_exit_code == EXIT_FAILURE );
+		ret = main( sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT( ret == EXIT_FAILURE );
 	}
 	/* -? */
 	{
 		char* argv[] = { "bldump", "-?" };
-		main( sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( t_exit_count == 2 );
-		CU_ASSERT( t_exit_code == EXIT_FAILURE );
+		ret = main( sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT( ret == EXIT_FAILURE );
 	}
 	/* --help */
 	{
 		char* argv[] = { "bldump", "--help" };
-		main( sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( t_exit_count == 3 );
-		CU_ASSERT( t_exit_code == EXIT_FAILURE );
+		ret = main( sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT( ret == EXIT_FAILURE );
 	}
-	
+	/* - */
+	{
+		char* argv[] = { "bldump", "-" };
+		ret = main( sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT( t_exit_code == EXIT_FAILURE );
+		CU_ASSERT( t_exit_count == 1 );
+	}
 }
 
 /*!
@@ -73,15 +84,15 @@ void tc_bldump_options(void)
  */
 void tc_bldump_help(void)
 {
-	long stderr_pos;
+	long pos1, pos2;
+	int ret;
 
-	t_exit_count = 0;
-	stderr_pos = ftell(t_stderr);
+	pos1 = ftell(t_stderr);
 	help();
-	stderr_pos = ftell(t_stderr);
+	pos2 = ftell(t_stderr);
 
 	CU_ASSERT(t_exit_count == 1);
-	CU_ASSERT(stderr_pos > 0);
+	CU_ASSERT(pos2 - pos1 > 0); /* count of the help message */
 }
 
 CU_ErrorCode ts_bldump_regist(void)
