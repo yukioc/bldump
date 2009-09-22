@@ -50,7 +50,7 @@ clean:
 test: clean depend libcunit.a
 	make $(TEST_EXE) CFLAGS="$(CFLAGS) -DCUNIT -ftest-coverage -fprofile-arcs"
 	@echo "### cunit"
-	./$(TEST_EXE)
+	./$(TEST_EXE) --test
 	@echo "### gcov"
 	gcov $(APP_SRC)
 
