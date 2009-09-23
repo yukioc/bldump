@@ -45,50 +45,59 @@ int ts_cli_cleanup(void)
 }
 
 /*!
- * @biref test "bldump [-]".
+ * @biref test "bldump -".
  */
-void tc_cli_wrong(void)
+void tc_cli_noopt(void)
 {
+	options_t opt;
 	int ret;
-
-	/* - */
-	{
-		char* argv[] = { "bldump", "-" };
-		ret = main( sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( ret == EXIT_FAILURE );
-	}
-	/* no argument */
-	{
-		char* argv[] = { "bldump" };
-		ret = main( sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( ret == EXIT_FAILURE );
-	}
+	char* argv[] = { "bldump", "-" };
+	options_reset( &opt );
+	ret = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+	CU_ASSERT( ret == 1 );
 }
 
+/*!
+ * @biref test "bldump".
+ */
+void tc_cli_noarg(void)
+{
+	options_t opt;
+	int ret;
+	char* argv[] = { "bldump" };
+	options_reset( &opt );
+	ret = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+	CU_ASSERT( ret == 1 );
+}
 
 /*!
  * @biref test "bldump -h".
  */
 void tc_cli_help(void)
 {
+	options_t opt;
 	int ret;
+
 	/* -h */
 	{
 		char* argv[] = { "bldump", "-h" };
-		ret = main( sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( ret == EXIT_FAILURE );
+		options_reset( &opt );
+		ret = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT( ret == 1 );
 	}
 	/* -? */
 	{
 		char* argv[] = { "bldump", "-?" };
-		ret = main( sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( ret == EXIT_FAILURE );
+		options_reset( &opt );
+		ret = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT( ret == 1 );
 	}
 	/* --help */
 	{
 		char* argv[] = { "bldump", "--help" };
-		ret = main( sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( ret == EXIT_FAILURE );
+		options_reset( &opt );
+		ret = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT( ret == 1 );
 	}
 }
 
@@ -97,21 +106,20 @@ void tc_cli_help(void)
  */
 void tc_cli_infile(void)
 {
+	options_t opt;
 	int ret;
-
-	/* non-existing */
-	{
-		char* argv[] = { "bldump", "non-existing.tmp" };
-		ret = main( sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( ret == EXIT_FAILURE );
-	}
-
+	char* argv[] = { "bldump", "infile" };
+	options_reset( &opt );
+	ret = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+	CU_ASSERT( ret == 0 );
+	CU_ASSERT( strcmp( opt.infile_name, "infile" ) == 0 );
 }
 
 CU_ErrorCode ts_cli_regist(void)
 {
 	CU_TestInfo ts_cli_cases[] = {
-		{ "bldump [-]",				tc_cli_wrong },
+		{ "bldump",					tc_cli_noarg },
+		{ "bldump -",				tc_cli_noopt },
 		{ "bldump (-h|-?|--help)",	tc_cli_help },
 		{ "bldump infile",			tc_cli_infile },
 		CU_TEST_INFO_NULL

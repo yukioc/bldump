@@ -18,6 +18,10 @@ typedef struct {
 	char*		infile_name;	/*!< argument infile */
 	char*		outfile_name;	/*!< argument outfile */
 
+	//container
+	int			data_length;
+	int			data_columns;
+
 } options_t;
 
 /*** file_t ***/
@@ -43,8 +47,11 @@ typedef struct {
  * Function assignment *
  ***********************/
 int main( int argc, char* argv[] );
-void options_reset( options_t* opt );
 int help(void);
+
+/*** options ***/
+void options_reset( options_t* opt );
+int  options_load( options_t* opt, int argc, char* argv[] );
 
 /*** memory ***/
 void memory_init( memory_t* memory );

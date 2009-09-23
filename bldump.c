@@ -38,6 +38,16 @@ const char *usage[] = {
 	""
 };
 
+/*** ifdef ***/
+#ifdef CUNIT
+#define DEBUG_ASSERT(c)		assert(c)
+#else
+#define DEBUG_ASSERT(c)
+#endif
+/* assert() is check always
+ * ASSERT() is check in debug.
+ */
+
 /*** macro ***/
 #define die verbose_die
 #define min(a,b) ((a)>(b)?(b):(a))
@@ -65,11 +75,15 @@ int main( int argc, char* argv[] )
 
 	options_t opt;
 	file_t    infile;
+	file_t    outfile;
 	memory_t  memory;
 
+	/*** prepare ***/
 	options_reset( &opt );
-	file_reset( &infile );
 	memory_init( &memory );
+	file_reset( &infile );
+	file_reset( &outfile );
+	verbose_level	= VERB_DEFAULT;
 
 #ifdef CUNIT
 	/* run test */
@@ -94,53 +108,100 @@ int main( int argc, char* argv[] )
 	}
 #endif
 
-	/*** arguments ***/
-	{
-		int i;
-		size_t a; /* for macro */
-		char *sub;
-		char *endp;
+	ret = 0;
 
-#define strlcmp(l,r) (strncmp(l,r,strlen(l)))
-#define ARG_FLAG(s) (strcmp(s,argv[i])==0)
-#define ARG_SPARAM(s) (strcmp(s,argv[i])==0 && (i+1) < argc && (sub=argv[++i]))
-#define ARG_LPARAM(s) (strlcmp(s,argv[i])==0 && (a=strlen(s))<strlen(argv[i]) && (sub=&argv[i][a]))
-		for (i = 1; i < argc; i++) {
-			if (ARG_FLAG("-?") || ARG_FLAG("-h") || ARG_FLAG("--help")) {
-				return help();
-			} else if ( argv[i][0] == '-' ) {
-				verbose_printf( VERB_ERR, "Error: unsupported option - %s\n", argv[i] );
-				return EXIT_FAILURE;
-			} else {
+	/*** arguments ***/
+	options_load( &opt, argc, argv  );
+
+	/*** set parameter. ***/
+
+	/* infile */
+	if ( file_open( &infile, opt.infile_name, "rb" ) == false ) {
+		verbose_printf( VERB_ERR, "Error: can't open infile - %s\n", opt.infile_name );
+		ret = 1;
+	}
+
+	/* memory */
+	if ( ret == 0 ) {
+		size_t size = 16;
+		if ( opt.data_length  <= 0 ) die( "Error: wrong data_length=%d\n", opt.data_length );
+		if ( opt.data_columns <= 0 ) die( "Error: wrong data_columns=%d\n", opt.data_columns );
+		size = (size_t) (opt.data_length * opt.data_columns);
+		memory_allocate( &memory, size );
+	}
+
+	/*** bldump ***/
+	if ( ret == 0 ) {
+		while( !feof(infile.ptr) ) {
+			ret = bldump_read( &memory, &infile, &opt );
+			if ( ret != 0 || memory.size == 0 ) {
+				assert( feof(infile.ptr) );
+				break;
+			}
+
+			ret = bldump_write( &memory, &outfile, &opt );
+			if ( ret != 0 ) {
 				break;
 			}
 		}
-
-		if ( argc - i > 0 ) {
-			opt.infile_name = argv[i++];
-		} else {
-			verbose_printf( VERB_ERR, "Error: not found argument - infile\n" );
-			return EXIT_FAILURE;
-		}
-
-		if ( argc - i > 0 ) {
-			opt.outfile_name = argv[i++];
-		} else {
-			opt.outfile_name = NULL;
-		}
 	}
 
-	/*** set parameter. ***/
-	{	
-		/*** infile ***/
-		if ( file_open( &infile, opt.infile_name, "rb" ) == false ) {
-			verbose_printf( VERB_ERR, "Error: can't open infile - %s\n", opt.infile_name );
-			return EXIT_FAILURE;
-		}
-	}
+	/*** dispose ***/
+	file_close( &infile );
+	memory_free( &memory );
 
+	return ret;
+}
+
+//##############################################################################
+// bldump
+//##############################################################################
+
+/*!
+ * @brief read data.
+ * @param[out] memory
+ * @param[in] infile
+ * @param[in] opt
+ */
+int bldump_read( memory_t* memory, file_t* infile, options_t* opt )
+{
+	int ret;
+	bool is;
+	size_t nmemb;
+
+	DEBUG_ASSERT( memory->length > 0 );
+
+	memory_clear( memory );
+	nmemb = memory->length - memory->size;
+
+	is = file_read( infile, memory, nmemb );
+   
+	if ( is == false ) {
+		(void)verbose_printf( VERB_DEBUG, "bldump: file read failure.\n" );
+		ret = 1;
+	} else {
+		DEBUG_ASSERT( memory->size > 0 ); /* success, but no data. */
+		ret = 0;
+	}
+	return ret;
+}
+
+/*!
+ * @brief write data
+ * @param[in] memory
+ * @param[out] outfile
+ * @param[in] opt
+ */
+int bldump_write( memory_t* memory, file_t* outfile, options_t* opt )
+{
+	/*** output ***/
+//	file_print( outfile, memory, opt );
 	return 0;
 }
+
+//##############################################################################
+// options
+//##############################################################################
 
 /*! 
  * @brief reset options.
@@ -153,6 +214,57 @@ void options_reset( options_t* opt )
 	//file
 	opt->infile_name    = NULL;
 	opt->outfile_name   = NULL;
+
+	//container
+	opt->data_length    = 0;
+	opt->data_columns   = 16;
+}
+
+/*!
+ * @brief load options from CLI arguments.
+ * @param[out] opt option parameter.
+ * @param[in] argc arguments data count.
+ * @param[in] argv arguments data.
+ * @retval 0 success.
+ * @retval 1 failure.
+ */
+int options_load( options_t* opt, int argc, char* argv[] )
+{
+	int i;
+	size_t a; /* for macro */
+	char *sub;
+	char *endp;
+
+#define strlcmp(l,r) (strncmp(l,r,strlen(l)))
+#define ARG_FLAG(s) (strcmp(s,argv[i])==0)
+#define ARG_SPARAM(s) (strcmp(s,argv[i])==0 && (i+1) < argc && (sub=argv[++i]))
+#define ARG_LPARAM(s) (strlcmp(s,argv[i])==0 && (a=strlen(s))<strlen(argv[i]) && (sub=&argv[i][a]))
+	for (i = 1; i < argc; i++) {
+		if (ARG_FLAG("-?") || ARG_FLAG("-h") || ARG_FLAG("--help")) {
+			help();
+			return 1;
+		} else if ( argv[i][0] == '-' ) {
+			verbose_printf( VERB_ERR, "Error: unsupported option - %s\n", argv[i] );
+			return 1;
+		} else {
+			break;
+		}
+	}
+
+	if ( argc - i > 0 ) {
+		opt->infile_name = argv[i++];
+	} else {
+		verbose_printf( VERB_ERR, "Error: not found argument - infile\n" );
+		return 1;
+	}
+
+	if ( argc - i > 0 ) {
+		opt->outfile_name = argv[i++];
+	} else {
+		opt->outfile_name = NULL;
+	}
+
+	return 0;
 }
 
 //##############################################################################
@@ -345,34 +457,39 @@ bool file_close( file_t* file )
  * @brief read data.
  * @param[in] file file pointer.
  * @param[out] memory write dump data.
- * @retval true success.
- * @retval false failture, cannot read because writable area is missing.
+ * @retval true  success.
+ * @retval false failture, cannot read then memory isnot updated.
  */
 bool file_read( file_t* file, memory_t* memory, size_t nmemb )
 {
 	const size_t size  = 1;
 	size_t       reads = 0;
+	size_t       pos   = 0;
+	bool         is;
 
-	assert( nmemb <= memory->length - memory->size );
-		// nmemb must be set to 'memory' memory area.
+	assert( nmemb <= memory->length - memory->size ); /* nmemb must be set to 'memory' memory area. */
 
 	if ( nmemb <= 0 ) {
-		assert( memory->length > 0 ); //! @test write buffer must be allocated. 
-		assert( nmemb == 0 ); //! @test always length>=size 
-		return false;
-	}
-	if ( memory->size == 0 ) {
-		memory->address = file->position;
-	}
-
-	reads = fread( &memory->data[memory->size], size, nmemb, file->ptr );
+		is = false;
+	} else {
+		pos   = file->position;
+		reads = fread( &memory->data[memory->size], size, nmemb, file->ptr );
 	
-	(void)verbose_printf( VERB_LOG, "bldump: fread - ret=%d, size=%d nmemb=%d fp=%x mem=%x\n", reads, size, nmemb, file->ptr, memory->data );
+		(void)verbose_printf( VERB_LOG, "bldump: fread - ret=%d, size=%d nmemb=%d fp=%x mem=%x\n", reads, size, nmemb, file->ptr, memory->data );
 
-	file->position += reads;
-	memory->size   += reads;
+		if ( reads == 0 ) {
+			is = false;
+		} else {
+			if ( memory->size == 0 ) {
+				memory->address = pos;
+			}
+			file->position += reads;
+			memory->size   += reads;
+			is = true;
+		}
+	}
 
-	return true;
+	return is;
 }
 
 /*!
@@ -397,7 +514,6 @@ int help(void) //{{{
 	for( i=0; i<size; i++ ) fprintf(STDERR, "%s\n", usage[i] );
 	return EXIT_FAILURE;
 }
-
 //}}}
 
 /* vim:fdm=marker:
