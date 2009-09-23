@@ -14,6 +14,11 @@
 /******************
  * Data structure *
  ******************/
+/*** enum ***/
+typedef enum {
+	HEX, DECIMAL, UDECIMAL, BINARY
+} OUTPUT_TYPE;
+
 typedef struct {
 	char*		infile_name;	/*!< argument infile */
 	char*		outfile_name;	/*!< argument outfile */
@@ -22,24 +27,30 @@ typedef struct {
 	int			data_length;
 	int			data_columns;
 
+	//outfile
+	OUTPUT_TYPE	output_type;	//!< argument -d, -u, -b
+	bool		show_address;	/*!< argument -a */
+	char*		col_separator;	/*!< separator of outputting column */
+	char*		row_separator;	/*!< separator of outputting row */
+
 } options_t;
 
 /*** file_t ***/
 typedef struct {
-	FILE* ptr;		//!< input file pointer
-	char* name;		//!< input file name
-	size_t position;	//!< start address to input
-	size_t length;	//!< input file length
+	FILE* ptr;			/*!< input file pointer */
+	char* name;			/*!< input file name */
+	size_t position;	/*!< start address to input */
+	size_t length;		/*!< input file length */
 } file_t;
 
 /*** memory_t ***/
 typedef unsigned char data_t;
 
 typedef struct {
-	size_t address;	//!< start address.
-	data_t* data;	//!< data buffer pointer.
-	size_t length;	//!< data buffer length.
-	size_t size;	//!< valid size.
+	size_t address;	/*!< start address. */
+	data_t* data;	/*!< data buffer pointer. */
+	size_t length;	/*!< data buffer length. */
+	size_t size;	/*!< valid size. */
 } memory_t;
 
 
@@ -48,6 +59,10 @@ typedef struct {
  ***********************/
 int main( int argc, char* argv[] );
 int help(void);
+
+int bldump_read( memory_t* memory, file_t* infile, options_t* opt );
+int bldump_write( memory_t* memory, file_t* outfile, options_t* opt );
+void write_hex( file_t* file, memory_t* memory, options_t* opt );
 
 /*** options ***/
 void options_reset( options_t* opt );

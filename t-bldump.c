@@ -261,6 +261,65 @@ void tc_file_x(void)
 }
 
 /*!
+ * @brief test of write_hex().
+ */
+void tc_write_hex(void)
+{
+	file_t outfile;
+	memory_t memory;
+	options_t opt;
+
+	file_reset( &outfile );
+	memory_init( &memory );
+	options_reset( &opt );
+
+	memory_allocate( &memory, 16 );
+	strcpy( (char*)memory.data, "0123456789ABCDEF" );
+	memory.size = 16;
+
+	/* 30,31,32, .. 56,46 */
+	{
+		FILE* in;
+		char buf[100];
+		size_t reads;
+		opt.show_address = false;
+		opt.data_length  = 1;
+		opt.col_separator = ",";
+		opt.row_separator = "\n";
+
+		file_open( &outfile, t_tmpname, "wb" );
+		write_hex( &outfile, &memory, &opt );
+		file_close( &outfile );
+
+		in = fopen( t_tmpname, "rb" );
+		reads = fread( buf, 1, 100, in );
+		CU_ASSERT_EQUAL( reads, 48 );
+		CU_ASSERT_NSTRING_EQUAL( buf, "30,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46\n", 48 );
+	}
+
+	/* 303132-333435- .. 434445-46 */
+	{
+		FILE* in;
+		char buf[100];
+		size_t reads;
+		opt.show_address = false;
+		opt.data_length  = 5;
+		opt.col_separator = "-";
+		opt.row_separator = "\n";
+
+		file_open( &outfile, t_tmpname, "wb" );
+		write_hex( &outfile, &memory, &opt );
+		file_close( &outfile );
+
+		in = fopen( t_tmpname, "rb" );
+		reads = fread( buf, 1, 100, in );
+		CU_ASSERT_EQUAL( reads, 36 );
+		CU_ASSERT_NSTRING_EQUAL( buf, "3031323334-3536373839-4142434445-46\n", 36 );
+	}
+
+}
+
+/*!
  * @brief test of bldump_read().
  */
 void tc_bldump_read(void)
@@ -320,6 +379,7 @@ void tc_bldump_read(void)
 		file_close( &infile );
 	}
 
+	remove( t_tmpname );
 	memory_free( &memory );
 }
 
@@ -336,6 +396,7 @@ CU_ErrorCode ts_bldump_regist(void)
 		{ "help()",					tc_help },
 		{ "memory_*()",				tc_memory_x },
 		{ "file_*()",				tc_file_x },
+		{ "write_hex()",			tc_write_hex },
 		{ "bldump_read()",			tc_bldump_read },
 		{ "bldump_write()",			tc_bldump_write },
 		CU_TEST_INFO_NULL

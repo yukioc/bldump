@@ -199,6 +199,44 @@ int bldump_write( memory_t* memory, file_t* outfile, options_t* opt )
 	return 0;
 }
 
+/*!
+ * @brief print hex data.
+ * @param[out] file file pointer.
+ * @param[in] memory read dump data.
+ */
+void write_hex( file_t* outfile, memory_t* memory, options_t* opt )
+{
+	size_t i;
+	int j;
+	int data_len = opt->data_length;
+
+	DEBUG_ASSERT( opt->col_separator != NULL );
+	DEBUG_ASSERT( opt->row_separator != NULL );
+
+	/*** output address  ***/
+	if ( opt->show_address == true ) {
+		fprintf( outfile->ptr, "%08lx: ", memory->address );
+	}
+
+	for ( i = 0; i < memory->size; ) {
+		/*** column separator ***/
+		if ( opt->col_separator != NULL && i != 0 ) {
+			fputs( opt->col_separator, outfile->ptr );
+		}
+
+		/*** output data ***/
+		for ( j = 0; j < data_len; j++ ) {
+			fprintf( outfile->ptr, "%02x", (unsigned char) memory->data[i] );
+			++i;
+			if ( i >= memory->size ) {
+				break;
+			}
+		}
+	}
+
+	fputs( opt->row_separator, outfile->ptr ); /* line separater */
+}
+
 //##############################################################################
 // options
 //##############################################################################
@@ -211,13 +249,19 @@ void options_reset( options_t* opt )
 {
 	memset( opt, 0, sizeof(options_t) );
 
-	//file
+	/*** file ***/
 	opt->infile_name    = NULL;
 	opt->outfile_name   = NULL;
 
-	//container
-	opt->data_length    = 0;
+	/*** container ***/
+	opt->data_length    = 1;
 	opt->data_columns   = 16;
+
+	/*** outfile ***/
+	opt->output_type    = HEX;
+	opt->show_address   = false;
+	opt->col_separator  = " ";
+	opt->row_separator  = "\n";
 }
 
 /*!
