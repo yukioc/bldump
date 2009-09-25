@@ -196,6 +196,70 @@ static void tc_bldump_setup(void)
 }
 
 /*!
+ * @brief test of bldump_read().
+ */
+static void tc_bldump_read(void)
+{
+	bool is;
+	options_t opt;
+	memory_t memory;
+	file_t infile;
+
+	options_reset( &opt );
+	memory_init( &memory );
+	file_reset( &infile );
+	memory_allocate( &memory, 30 );
+
+	/* file size = 0 */
+	{
+		FILE* in = fopen( t_tmpname, "wt" );
+		assert( in != NULL );
+		fclose( in );
+
+		(void)file_open( &infile, t_tmpname, "rt" );
+		is = bldump_read( &memory, &infile, &opt );
+		CU_ASSERT_EQUAL( is, false );
+
+		(void)file_close( &infile );
+	}
+
+	/* normal text */
+	{
+		FILE* in = fopen( t_tmpname, "wt" );
+		assert( in != NULL );
+		fputs( "The quick brown fox jumps over the lazy dog", in );
+		fclose( in );
+
+		(void)file_open( &infile, t_tmpname, "rt" );
+
+		/* 1 */
+		is = bldump_read( &memory, &infile, &opt );
+		CU_ASSERT_EQUAL( is,             true );
+		CU_ASSERT_EQUAL( memory.size,    30 );
+		CU_ASSERT_EQUAL( memory.address, 0 );
+		CU_ASSERT_NSTRING_EQUAL( memory.data, "The quick brown fox jumps over", 30 );
+
+		/* 2 */
+		is = bldump_read( &memory, &infile, &opt );
+		CU_ASSERT_EQUAL( is,             true );
+		CU_ASSERT_EQUAL( memory.size,    13 ); /* size is limited by file size */
+		CU_ASSERT_EQUAL( memory.address, 30 );
+		CU_ASSERT_NSTRING_EQUAL( memory.data, " the lazy dog", 13 ); /* notice: */
+
+		/* 3 */
+		is = bldump_read( &memory, &infile, &opt );
+		CU_ASSERT_EQUAL( is,             false );
+		CU_ASSERT_EQUAL( memory.size,    0 );
+		CU_ASSERT_EQUAL( memory.address, 0 );
+
+		(void)file_close( &infile );
+	}
+
+	remove( t_tmpname );
+	memory_free( &memory );
+}
+
+/*!
  * @brief test of HEX format of bldump_write().
  */
 static void tc_bldump_hex(void)
@@ -255,77 +319,6 @@ static void tc_bldump_hex(void)
 		CU_ASSERT_NSTRING_EQUAL( buf, "aaaa5555: 3031323334-3536373839-4142434445-46\n", 46 );
 	}
 
-}
-
-/*!
- * @brief test of bldump_read().
- */
-static void tc_bldump_read(void)
-{
-	int ret;
-	options_t opt;
-	memory_t memory;
-	file_t infile;
-
-	options_reset( &opt );
-	memory_init( &memory );
-	file_reset( &infile );
-	memory_allocate( &memory, 30 );
-
-	/* file size = 0 */
-	{
-		FILE* in = fopen( t_tmpname, "wt" );
-		assert( in != NULL );
-		fclose( in );
-
-		(void)file_open( &infile, t_tmpname, "rt" );
-		ret = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( ret, 1 );
-
-		(void)file_close( &infile );
-	}
-
-	/* normal text */
-	{
-		FILE* in = fopen( t_tmpname, "wt" );
-		assert( in != NULL );
-		fputs( "The quick brown fox jumps over the lazy dog", in );
-		fclose( in );
-
-		(void)file_open( &infile, t_tmpname, "rt" );
-
-		/* 1 */
-		ret = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( ret,            0 );
-		CU_ASSERT_EQUAL( memory.size,    30 );
-		CU_ASSERT_EQUAL( memory.address, 0 );
-		CU_ASSERT_NSTRING_EQUAL( memory.data, "The quick brown fox jumps over", 30 );
-
-		/* 2 */
-		ret = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( ret,            0 );
-		CU_ASSERT_EQUAL( memory.size,    13 ); /* size is limited by file size */
-		CU_ASSERT_EQUAL( memory.address, 30 );
-		CU_ASSERT_NSTRING_EQUAL( memory.data, " the lazy dog", 13 ); /* notice: */
-
-		/* 3 */
-		ret = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( ret,            1 );
-		CU_ASSERT_EQUAL( memory.size,    0 );
-		CU_ASSERT_EQUAL( memory.address, 0 );
-
-		(void)file_close( &infile );
-	}
-
-	remove( t_tmpname );
-	memory_free( &memory );
-}
-
-/*!
- * @brief test of bldump_write().
- */
-static void tc_bldump_write(void)
-{
 }
 
 CU_ErrorCode ts_bldump_regist(void)

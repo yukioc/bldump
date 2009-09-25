@@ -71,7 +71,7 @@ const static char *usage[] = {
  */
 int main( int argc, char* argv[] )
 {
-	int ret;
+	bool is_ok;
 
 	options_t opt; 
 	file_t    infile;
@@ -95,6 +95,7 @@ int main( int argc, char* argv[] )
 		extern CU_ErrorCode ts_memory_regist(void);
 		extern CU_ErrorCode ts_file_regist(void);
 		extern CU_ErrorCode ts_bldump_regist(void);
+		extern CU_ErrorCode ts_main_regist(void);
 		CU_ErrorCode cue;
 		cue = CU_initialize_registry();
 		if ( cue == CUE_SUCCESS ) cue = ts_verbose_regist();
@@ -102,6 +103,7 @@ int main( int argc, char* argv[] )
 		if ( cue == CUE_SUCCESS ) cue = ts_memory_regist();
 		if ( cue == CUE_SUCCESS ) cue = ts_file_regist();
 		if ( cue == CUE_SUCCESS ) cue = ts_bldump_regist();
+		if ( cue == CUE_SUCCESS ) cue = ts_main_regist();
 		/* use CUnit Basic I/F */
 		{
 			unsigned int fails;
@@ -115,22 +117,24 @@ int main( int argc, char* argv[] )
 #endif
 
 	/*** arguments ***/
-	(void)options_load( &opt, argc, argv  );
+	is_ok = options_load( &opt, argc, argv  );
 
 	/*** set parameter. ***/
-	ret = bldump_setup( &memory, &infile, &outfile, &opt );
+	if ( is_ok == true ) {
+		is_ok = bldump_setup( &memory, &infile, &outfile, &opt );
+	}
 
 	/*** bldump ***/
-	if ( ret == 0 ) {
+	if ( is_ok == true ) {
 		while( feof(infile.ptr)==0 ) {
-			ret = bldump_read( &memory, &infile, &opt );
-			if ( ret != 0 || memory.size == 0 ) {
+			is_ok = bldump_read( &memory, &infile, &opt );
+			if ( is_ok == false || memory.size == 0 ) {
 				assert( feof(infile.ptr)!=0 );
 				break;
 			}
 
-			ret = bldump_write( &memory, &outfile, &opt );
-			if ( ret != 0 ) {
+			is_ok = bldump_write( &memory, &outfile, &opt );
+			if ( is_ok == false ) {
 				break;
 			}
 		}
@@ -138,11 +142,12 @@ int main( int argc, char* argv[] )
 
 	/*** dispose ***/
 	(void)file_close( &infile );
-	(void)memory_free( &memory );
+	if ( memory.data != NULL ) {
+		(void)memory_free( &memory );
+	}
 	(void)options_clear( &opt );
 
-
-	return ret;
+	return (is_ok == true) ? 0 : 1;
 }
 
 //##############################################################################
@@ -202,10 +207,11 @@ bool bldump_setup( memory_t* memory, file_t* infile, file_t* outfile, options_t*
  * @param[out] memory
  * @param[in] infile
  * @param[in] opt
+ * @retval true success.
+ * @retval false failure.
  */
-int bldump_read( memory_t* memory, file_t* infile, /*@unused@*/ options_t* opt )
+bool bldump_read( memory_t* memory, file_t* infile, /*@unused@*/ options_t* opt )
 {
-	int ret;
 	bool is;
 	size_t nmemb;
 
@@ -218,12 +224,10 @@ int bldump_read( memory_t* memory, file_t* infile, /*@unused@*/ options_t* opt )
    
 	if ( is == false ) {
 		(void)verbose_printf( VERB_DEBUG, "bldump: file read failure.\n" );
-		ret = 1;
 	} else {
 		DEBUG_ASSERT( memory->size > 0 ); /* success, but no data. */
-		ret = 0;
 	}
-	return ret;
+	return is;
 }
 
 /*!
@@ -231,9 +235,10 @@ int bldump_read( memory_t* memory, file_t* infile, /*@unused@*/ options_t* opt )
  * @param[in] memory
  * @param[out] outfile
  * @param[in] opt
- * @retval 0 success.
+ * @retval true success.
+ * @retval false failure.
  */
-int bldump_write( memory_t* memory, file_t* outfile, options_t* opt )
+bool bldump_write( memory_t* memory, file_t* outfile, options_t* opt )
 {
 	/*** output ***/
 	switch( opt->output_type )
@@ -247,7 +252,7 @@ int bldump_write( memory_t* memory, file_t* outfile, options_t* opt )
 		default:
 			assert(0);
 	}
-	return 0;
+	return true ;
 }
 
 /*!
@@ -352,10 +357,10 @@ bool options_clear( options_t* opt )
  * @param[out] opt option parameter.
  * @param[in] argc arguments data count.
  * @param[in] argv arguments data.
- * @retval 0 success.
- * @retval 1 failure.
+ * @retval true success.
+ * @retval false failure.
  */
-int options_load( options_t* opt, int argc, char* argv[] )
+bool options_load( options_t* opt, int argc, char* argv[] )
 {
 	int i;
 	size_t a; /* for macro */
@@ -369,10 +374,10 @@ int options_load( options_t* opt, int argc, char* argv[] )
 	for (i = 1; i < argc; i++) {
 		if (ARG_FLAG("-?") || ARG_FLAG("-h") || ARG_FLAG("--help")) {
 			(void) help();
-			return 1;
+			return false;
 		} else if ( argv[i][0] == '-' ) {
 			(void)verbose_printf( VERB_ERR, "Error: unsupported option - %s\n", argv[i] );
-			return 1;
+			return false;
 		} else {
 			break;
 		}
@@ -384,7 +389,7 @@ int options_load( options_t* opt, int argc, char* argv[] )
 		i++;
 	} else {
 		(void)verbose_printf( VERB_ERR, "Error: not found argument - infile\n" );
-		return 1;
+		return false;
 	}
 
 	if ( argc - i > 0 ) {
@@ -402,7 +407,7 @@ int options_load( options_t* opt, int argc, char* argv[] )
 		opt->row_separator  = strclone( "\n" );
 	}
 
-	return 0;
+	return true;
 }
 
 //##############################################################################
