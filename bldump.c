@@ -26,7 +26,7 @@
 #define COPYRIGHT	"by yukio"
 #define ABOUT		"[bldump] simple decimal, hex dump with Binary, Text, CSV.. " VERSION " " DATE " " COPYRIGHT "\n\n"
 
-const char *usage[] = {
+const static char *usage[] = {
 	"Usage: bldump [options] [infile [outfile]]",
 	"",
 	"  infile  dump file.",
@@ -73,29 +73,35 @@ int main( int argc, char* argv[] )
 {
 	int ret;
 
-	options_t opt;
+	options_t opt; 
 	file_t    infile;
 	file_t    outfile;
 	memory_t  memory;
 
 	/*** prepare ***/
-	options_reset( &opt );
+
+	options_reset( &opt );  
 	memory_init( &memory );
 	file_reset( &infile );
 	file_reset( &outfile );
-	verbose_level	= VERB_DEFAULT;
+
+	verbose_level = VERB_DEFAULT;
 
 #ifdef CUNIT
 	/* run test */
 	if ( argc == 2 && strcmp("--test", argv[1]) == 0  ) {
 		extern CU_ErrorCode ts_verbose_regist(void);
+		extern CU_ErrorCode ts_opt_regist(void);
+		extern CU_ErrorCode ts_memory_regist(void);
+		extern CU_ErrorCode ts_file_regist(void);
 		extern CU_ErrorCode ts_bldump_regist(void);
-		extern CU_ErrorCode ts_cli_regist(void);
 		CU_ErrorCode cue;
 		cue = CU_initialize_registry();
-		if ( cue == CUE_SUCCESS ) cue == ts_verbose_regist();
-		if ( cue == CUE_SUCCESS ) cue == ts_bldump_regist();
-		if ( cue == CUE_SUCCESS ) cue == ts_cli_regist();
+		if ( cue == CUE_SUCCESS ) cue = ts_verbose_regist();
+		if ( cue == CUE_SUCCESS ) cue = ts_opt_regist();
+		if ( cue == CUE_SUCCESS ) cue = ts_memory_regist();
+		if ( cue == CUE_SUCCESS ) cue = ts_file_regist();
+		if ( cue == CUE_SUCCESS ) cue = ts_bldump_regist();
 		/* use CUnit Basic I/F */
 		{
 			unsigned int fails;
@@ -108,34 +114,18 @@ int main( int argc, char* argv[] )
 	}
 #endif
 
-	ret = 0;
-
 	/*** arguments ***/
-	options_load( &opt, argc, argv  );
+	(void)options_load( &opt, argc, argv  );
 
 	/*** set parameter. ***/
-
-	/* infile */
-	if ( file_open( &infile, opt.infile_name, "rb" ) == false ) {
-		verbose_printf( VERB_ERR, "Error: can't open infile - %s\n", opt.infile_name );
-		ret = 1;
-	}
-
-	/* memory */
-	if ( ret == 0 ) {
-		size_t size = 16;
-		if ( opt.data_length  <= 0 ) die( "Error: wrong data_length=%d\n", opt.data_length );
-		if ( opt.data_columns <= 0 ) die( "Error: wrong data_columns=%d\n", opt.data_columns );
-		size = (size_t) (opt.data_length * opt.data_columns);
-		memory_allocate( &memory, size );
-	}
+	ret = bldump_setup( &memory, &infile, &outfile, &opt );
 
 	/*** bldump ***/
 	if ( ret == 0 ) {
-		while( !feof(infile.ptr) ) {
+		while( feof(infile.ptr)==0 ) {
 			ret = bldump_read( &memory, &infile, &opt );
 			if ( ret != 0 || memory.size == 0 ) {
-				assert( feof(infile.ptr) );
+				assert( feof(infile.ptr)!=0 );
 				break;
 			}
 
@@ -147,8 +137,10 @@ int main( int argc, char* argv[] )
 	}
 
 	/*** dispose ***/
-	file_close( &infile );
-	memory_free( &memory );
+	(void)file_close( &infile );
+	(void)memory_free( &memory );
+	(void)options_clear( &opt );
+
 
 	return ret;
 }
@@ -158,12 +150,60 @@ int main( int argc, char* argv[] )
 //##############################################################################
 
 /*!
+ * @brief setup parameter.
+ * @param[out] memory
+ * @param[out] infile
+ * @param[out] outfile
+ * @param[in] opt
+ * @retval 0 success.
+ * @retval 1 failure.
+ */
+bool bldump_setup( memory_t* memory, file_t* infile, file_t* outfile, options_t* opt )
+{
+	bool is;
+	size_t size;
+
+	/* infile */
+	if ( file_open( infile, opt->infile_name, "rb" ) == false ) {
+		(void)verbose_printf( VERB_ERR, "Error: can't open infile - %s\n", opt->infile_name );
+		return false;
+	}
+
+	/* outfile */
+	if ( opt->outfile_name == NULL ) {
+		(void)verbose_printf( VERB_LOG, "bldump: output to `stdout\' insted of outfile.\n" );
+		outfile->ptr    = stdout;
+		outfile->length = 0;
+	} else {
+		if ( file_open( outfile, opt->outfile_name, "wb" ) == false ) {
+			(void)verbose_printf( VERB_ERR, "Error: can't open outfile - %s\n", opt->outfile_name );
+			return false;
+		}
+	}
+
+	/* memory */
+	if ( opt->data_length  <= 0 ) {
+		(void)verbose_printf( VERB_ERR, "Error: wrong data_length=%d\n", opt->data_length );
+		return false;
+	}
+	if ( opt->data_columns <= 0 ) {
+		(void)verbose_printf( VERB_ERR, "Error: wrong data_columns=%d\n", opt->data_columns );
+		return false;
+	}
+	size = (size_t) (opt->data_length * opt->data_columns);
+	
+	is = memory_allocate( memory, size );
+
+	return is;
+}
+
+/*!
  * @brief read data.
  * @param[out] memory
  * @param[in] infile
  * @param[in] opt
  */
-int bldump_read( memory_t* memory, file_t* infile, options_t* opt )
+int bldump_read( memory_t* memory, file_t* infile, /*@unused@*/ options_t* opt )
 {
 	int ret;
 	bool is;
@@ -191,20 +231,32 @@ int bldump_read( memory_t* memory, file_t* infile, options_t* opt )
  * @param[in] memory
  * @param[out] outfile
  * @param[in] opt
+ * @retval 0 success.
  */
 int bldump_write( memory_t* memory, file_t* outfile, options_t* opt )
 {
 	/*** output ***/
-//	file_print( outfile, memory, opt );
+	switch( opt->output_type )
+	{
+		case HEX:
+			write_hex( memory, outfile, opt );
+			break;
+		case DECIMAL:
+		case UDECIMAL:
+		case BINARY:
+		default:
+			assert(0);
+	}
 	return 0;
 }
 
 /*!
  * @brief print hex data.
- * @param[out] file file pointer.
  * @param[in] memory read dump data.
+ * @param[out] file file pointer.
+ * @param[in] opt
  */
-void write_hex( file_t* outfile, memory_t* memory, options_t* opt )
+void write_hex( memory_t* memory, file_t* outfile, options_t* opt )
 {
 	size_t i;
 	int j;
@@ -215,18 +267,18 @@ void write_hex( file_t* outfile, memory_t* memory, options_t* opt )
 
 	/*** output address  ***/
 	if ( opt->show_address == true ) {
-		fprintf( outfile->ptr, "%08lx: ", memory->address );
+		fprintf( outfile->ptr, "%08lx: ", (unsigned long)memory->address );
 	}
 
 	for ( i = 0; i < memory->size; ) {
 		/*** column separator ***/
 		if ( opt->col_separator != NULL && i != 0 ) {
-			fputs( opt->col_separator, outfile->ptr );
+			(void)fputs( opt->col_separator, outfile->ptr );
 		}
 
 		/*** output data ***/
 		for ( j = 0; j < data_len; j++ ) {
-			fprintf( outfile->ptr, "%02x", (unsigned char) memory->data[i] );
+			fprintf( outfile->ptr, "%02x", (unsigned int) memory->data[i] );
 			++i;
 			if ( i >= memory->size ) {
 				break;
@@ -234,7 +286,7 @@ void write_hex( file_t* outfile, memory_t* memory, options_t* opt )
 		}
 	}
 
-	fputs( opt->row_separator, outfile->ptr ); /* line separater */
+	(void)fputs( opt->row_separator, outfile->ptr ); /* line separater */
 }
 
 //##############################################################################
@@ -260,8 +312,39 @@ void options_reset( options_t* opt )
 	/*** outfile ***/
 	opt->output_type    = HEX;
 	opt->show_address   = false;
-	opt->col_separator  = " ";
-	opt->row_separator  = "\n";
+	opt->col_separator  = NULL;
+	opt->row_separator  = NULL;
+}
+
+/*! 
+ * @brief clear options.
+ * @param[in,out] opt option data.
+ */
+bool options_clear( options_t* opt )
+{
+	bool retval = true;
+	if ( strfree( opt->infile_name ) == true ) {
+		opt->infile_name = NULL;
+	} else {
+		retval = false;
+	}
+	if ( strfree( opt->outfile_name ) == true ) {
+		opt->outfile_name = NULL;
+	} else {
+		retval = false;
+	}
+	if ( strfree( opt->col_separator ) == true ) {
+		opt->col_separator = NULL;
+	} else {
+		retval = false;
+	}
+	if ( strfree( opt->row_separator ) == true ) {
+		opt->row_separator = NULL;
+	} else {
+		retval = false;
+	}
+
+	return retval;
 }
 
 /*!
@@ -285,10 +368,10 @@ int options_load( options_t* opt, int argc, char* argv[] )
 #define ARG_LPARAM(s) (strlcmp(s,argv[i])==0 && (a=strlen(s))<strlen(argv[i]) && (sub=&argv[i][a]))
 	for (i = 1; i < argc; i++) {
 		if (ARG_FLAG("-?") || ARG_FLAG("-h") || ARG_FLAG("--help")) {
-			help();
+			(void) help();
 			return 1;
 		} else if ( argv[i][0] == '-' ) {
-			verbose_printf( VERB_ERR, "Error: unsupported option - %s\n", argv[i] );
+			(void)verbose_printf( VERB_ERR, "Error: unsupported option - %s\n", argv[i] );
 			return 1;
 		} else {
 			break;
@@ -296,16 +379,27 @@ int options_load( options_t* opt, int argc, char* argv[] )
 	}
 
 	if ( argc - i > 0 ) {
-		opt->infile_name = argv[i++];
+		assert( strlen(argv[i]) != 0 );
+		opt->infile_name = strclone( argv[i] );
+		i++;
 	} else {
-		verbose_printf( VERB_ERR, "Error: not found argument - infile\n" );
+		(void)verbose_printf( VERB_ERR, "Error: not found argument - infile\n" );
 		return 1;
 	}
 
 	if ( argc - i > 0 ) {
-		opt->outfile_name = argv[i++];
+		assert( strlen(argv[i]) != 0 );
+		opt->outfile_name = strclone( argv[i] );
+		i++;
 	} else {
 		opt->outfile_name = NULL;
+	}
+
+	if ( opt->col_separator == NULL ) {
+		opt->col_separator  = strclone( " " );
+	}
+	if ( opt->row_separator == NULL ) {
+		opt->row_separator  = strclone( "\n" );
 	}
 
 	return 0;
@@ -337,7 +431,7 @@ bool memory_allocate( memory_t* memory, size_t length )
 	data_t* mem;
 
 	if ( memory->data != NULL ) {
-		verbose_printf( VERB_ERR, "Error: memory is already allocated.\n" );
+		(void)verbose_printf( VERB_ERR, "Error: memory is already allocated.\n" );
 		retval = false;
 	}
 	else {
@@ -352,7 +446,7 @@ bool memory_allocate( memory_t* memory, size_t length )
 			memory->address = 0;
 			retval = true;
 		} else {
-			verbose_printf( VERB_ERR, "Error: memory allocation failure\n" );
+			(void)verbose_printf( VERB_ERR, "Error: memory allocation failure\n" );
 			retval = false;
 		}
 	}
@@ -388,7 +482,7 @@ bool memory_free( memory_t* memory )
 		retval = true;
 	}
 	else {
-		verbose_printf( VERB_ERR, "Error: memory is not allocated\n" );
+		(void)verbose_printf( VERB_ERR, "Error: memory is not allocated\n" );
 		retval = false;
 	}
 	memory->data = NULL;
@@ -427,24 +521,25 @@ void file_reset( file_t* file )
  * @retval true  opened file of 'name'.
  * @retval false couldn't opend.
  */
-bool file_open( file_t* file, char* name, const char* mode )
+bool file_open( file_t* file, const char* name, const char* mode )
 {
-	// file open
-	file->name = name;
-	if ( file->name == NULL || strlen( file->name ) == 0 ) {
+	/*** check parameter ***/
+	if ( name == NULL || strlen( name ) == 0 ) {
 		return false;
 	}
 
-	file->ptr = fopen( file->name, mode );
+	/*** file open ***/
+	file->name = strclone( name );
+	file->ptr  = fopen( file->name, mode );
 	if ( file->ptr == NULL ) {
 		return false;
 	}
 
-	// get file length
-	if ( mode[0] == 'r' ) { //read mode
-		fseek( file->ptr, 0, SEEK_END );
+	/*** get file length ***/
+	if ( mode[0] == 'r' ) { /* read mode */
+		(void)fseek( file->ptr, 0, SEEK_END );
 		file->length = (size_t) ftell( file->ptr );
-		fseek( file->ptr, 0, SEEK_SET);
+		(void)fseek( file->ptr, 0, SEEK_SET);
 	}
 
 	(void)verbose_printf( VERB_LOG,
@@ -485,15 +580,22 @@ int file_seek( file_t* file, size_t offset )
  */
 bool file_close( file_t* file )
 {
-	bool retval;
-	if ( file->ptr != NULL ) {
-		fclose( file->ptr );
-		file_reset( file );
-		retval = true;
-	}
-	else {
+	bool retval = true;
+
+	if ( (file->ptr == stdout) || (file->ptr == stderr) || (file->ptr == stdin) ) {
+	} else if ( file->ptr != NULL ) {
+		(void)fclose( file->ptr );
+	} else {
 		retval = false;
 	}
+	if ( file->name != NULL ) {
+		free( file->name );
+	} else {
+		retval = false;
+	}
+
+	file_reset( file );
+
 	return retval;
 }
 
@@ -502,7 +604,7 @@ bool file_close( file_t* file )
  * @param[in] file file pointer.
  * @param[out] memory write dump data.
  * @retval true  success.
- * @retval false failture, cannot read then memory isnot updated.
+ * @retval false failure, cannot read then memory isnot updated.
  */
 bool file_read( file_t* file, memory_t* memory, size_t nmemb )
 {
@@ -548,6 +650,7 @@ void file_write( file_t* file, memory_t* memory )
 	file->length += nmemb;
 }
 
+
 /*!
  * @brief display help message.
  */
@@ -559,6 +662,40 @@ int help(void) //{{{
 	return EXIT_FAILURE;
 }
 //}}}
+
+/*!
+ * @brief clone string.
+ * @param[in] str string to clone.
+ * @retval string memory pointer that point new memory and set string same as 'str'.
+ */
+char* strclone( const char* str )
+{
+	char* retval;
+	assert( str != NULL );
+	assert( strlen(str) > 0 );
+
+	retval = (char*)malloc( strlen(str)+1 );
+	strcpy( retval, str );
+	return retval;
+}
+
+/*!
+ * @brief free memory of string.
+ * @param[in] str string pointer.
+ * @retval true success.
+ * @retval false failure.
+ */
+bool strfree( char* str )
+{
+	bool retval = true;
+	if ( str != NULL ) {
+		free( str );
+	} else {
+		retval = false;
+	}
+	return retval;
+}
+
 
 /* vim:fdm=marker:
  */

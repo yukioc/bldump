@@ -9,6 +9,7 @@ APP_SRC		:= bldump.c verbose.c
 TEST_EXE	:= $(APP_EXE)-test
 TEST_SRC	:= $(wildcard t-*.c)
 TEST_LIB	:= cunit
+DOXYGEN_CFG	:= bldump.dox
 CUNIT_DIR	:= ./CUnit
 CUNIT_VER	:= CUnit-2.1-0
 ALL_SRC		:= $(APP_SRC) $(TEST_SRC)
@@ -80,6 +81,25 @@ libcunit.a :
 	cp $(CUNIT_VER)/CUnit/Sources/.libs/libcunit.a  ${CUNIT_DIR}/
 	rm $(CUNIT_VER)-src.tar.gz
 	rm -r $(CUNIT_VER)
+
+.PHONEY: doxygen
+doxygen:
+	@echo "### doxygen"
+	doxygen $(DOXYGEN_CFG)
+
+.PHONEY: splint
+splint:
+	@echo "### splint"
+	splint -standard		\
+		-duplicatequals			\
+		-mustfreeonly			\
+		-observertrans -statictrans -nullstate \
+		-compdestroy \
+		-sefparams \
+		-unqualifiedtrans -branchstate -globstate \
+		+longunsignedintegral \
+		-I. -DBLDUMP_DEBUG		\
+		$(ALL_SRC)
 
 ##### SUFFIX
 .SUFFIXES: .c .exe

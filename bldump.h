@@ -60,29 +60,36 @@ typedef struct {
 int main( int argc, char* argv[] );
 int help(void);
 
+bool bldump_setup( memory_t* memory, file_t* infile, file_t* outfile, options_t* opt );
 int bldump_read( memory_t* memory, file_t* infile, options_t* opt );
 int bldump_write( memory_t* memory, file_t* outfile, options_t* opt );
-void write_hex( file_t* file, memory_t* memory, options_t* opt );
+void write_hex( memory_t* memory, file_t* file, options_t* opt );
 
 /*** options ***/
-void options_reset( options_t* opt );
+void options_reset( /*@out@*/ options_t* opt );
 int  options_load( options_t* opt, int argc, char* argv[] );
+bool options_clear( options_t* opt );
 
 /*** memory ***/
-void memory_init( memory_t* memory );
+void memory_init( /*@out@*/ memory_t* memory );
 bool memory_allocate( memory_t* memory, size_t length );
 void memory_clear( memory_t* memory );
 bool memory_free( memory_t* memory );
 
 /*** file ***/
-void file_reset( file_t* file );
-bool file_open( file_t* file, char* name, const char* mode );
+void file_reset( /*@out@*/ file_t* file );
+bool file_open( file_t* file, const char* name, const char* mode );
 bool file_close( file_t* file );
 bool file_read( file_t* file, memory_t* memory, size_t nmemb );
 void file_write( file_t* file, memory_t* memory );
 
+/*** utility ***/
+char* strclone( const char* str );
+bool strfree( char* str );
+
 #ifdef CUNIT
 extern FILE *t_stdin, *t_stdout, *t_stderr;
+extern char* t_tmpname;
 #endif
 
 #endif

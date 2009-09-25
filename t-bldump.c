@@ -12,9 +12,10 @@
 #include "bldump.h"
 
 FILE *t_stdin, *t_stdout, *t_stderr;
-char* t_tmpname = "t-bldump.tmp" ;
+char* t_tmpname  = "t-bldump.tmp" ;
+char* t_tmpname2 = "t-bldump2.tmp" ;
 
-int ts_bldump_init(void)
+static int ts_bldump_init(void)
 {
 	if ( verbose_out != stdout ) {
 		fprintf( stderr, "Error: verbose_out is not stdout\n" );
@@ -34,11 +35,11 @@ int ts_bldump_init(void)
 	return 0;
 }
 
-int ts_bldump_cleanup(void)
+static int ts_bldump_cleanup(void)
 {
-	fclose( t_stdin  );
-	fclose( t_stdout );
-	fclose( t_stderr );
+	(void) fclose( t_stdin  );
+	(void) fclose( t_stdout );
+	(void) fclose( t_stderr );
 	t_stdin = NULL;
 	t_stdout = NULL;
 	t_stderr = NULL;
@@ -50,7 +51,7 @@ int ts_bldump_cleanup(void)
 /*!
  * @brief test bldump::help().
  */
-void tc_help(void)
+static void tc_help(void)
 {
 	/* help() function */
 	long pos1, pos2;
@@ -64,206 +65,140 @@ void tc_help(void)
 }
 
 /*!
- * @brief test of memory_*.
+ * @brief test bldump::strfree().
  */
-void tc_memory_x(void)
+static void tc_strfree(void)
 {
-	bool ret;
-	memory_t memory;
-	
-	/* memory_init() */
-	{
-		memset( &memory, 0xcc, sizeof(memory_t) );
-		memory_init( &memory );
-		CU_ASSERT_EQUAL(    memory.address,  0L );
-		CU_ASSERT_PTR_NULL( memory.data );
-		CU_ASSERT_EQUAL(    memory.length,   0L );
-		CU_ASSERT_EQUAL(    memory.size,     0L );
-	}
+	char* s;
+	bool is;
+   
+	/* allocated memory */
+	s = (char*)malloc(1);
+	is = strfree(s);
+	CU_ASSERT_EQUAL( is, true );
 
-	/* memory_allocate() - failure (couldn't allocate) */
-	{
-		ret = memory_allocate( &memory, -1 );
-		CU_ASSERT_EQUAL( ret, false );
-	}
-	/* memory_allocate() - suucess */
-	{
-		ret = memory_allocate( &memory, 10 );
-		CU_ASSERT_EQUAL( ret,            true );
-		CU_ASSERT_EQUAL( memory.address, 0L );
-		CU_ASSERT_PTR_NOT_NULL( memory.data );
-		CU_ASSERT_EQUAL( memory.length,  10 );
-		CU_ASSERT_EQUAL( memory.size,    0 );
-	}
-	/* memory_allocate() - failure (re-allocated) */
-	{
-		ret = memory_allocate( &memory, 10 );
-		CU_ASSERT_EQUAL( ret, false );
-	}
-	
-	/* memory_clear() */
-	{
-		memory.address = 2;
-		memory.size = 3;
-		memory_clear( &memory );
-		CU_ASSERT_PTR_NOT_NULL(  memory.data );
-		CU_ASSERT_NOT_EQUAL(     memory.length,  0 );
-		CU_ASSERT_EQUAL(         memory.address, 0L );
-		CU_ASSERT_EQUAL(         memory.size,    0L );
-	}
-
-	/* memory_free() - success */
-	{
-		ret = memory_free( &memory );
-		CU_ASSERT_EQUAL( ret,           true );
-		CU_ASSERT_PTR_NULL( memory.data );
-		CU_ASSERT_EQUAL( memory.length, 0L );
-	}
-	/* memory_free() - failure */
-	{
-		ret = memory_free( &memory );
-		CU_ASSERT_EQUAL( ret, false );
-	}
+	/* NULL */ 
+	s = NULL;
+	is = strfree(s);
+	CU_ASSERT_EQUAL( is, false );
 }
 
 /*!
- * @brief test of file_*.
+ * @brief test bldump::bldump_setup().
  */
-void tc_file_x(void)
+static void tc_bldump_setup(void)
 {
-	bool is;
-	int val;
-	file_t file;
+	int is;
+	memory_t  memory;
+	file_t    infile;
+	file_t    outfile;
+	options_t opt;
 
-	/* file_reset() */
-	{
-		memset( &file, 0xcc, sizeof(file_t) );
-		file_reset( &file );
-		CU_ASSERT_PTR_NULL( file.ptr  );
-		CU_ASSERT_PTR_NULL( file.name );
-		CU_ASSERT_EQUAL( file.position, 0L );
-		CU_ASSERT_EQUAL( file.length,   0L );
-	}
+	memory_init( &memory );
+	file_reset( &infile );
+	file_reset( &outfile );
+	options_reset( &opt );
 
-	/* file_open() - check NULL */
-	{
-		is = file_open( &file, NULL, "rt" );
-		CU_ASSERT_EQUAL( is, false );
-		CU_ASSERT_PTR_NULL( file.name );
-	}
-	/* file_open() - non existing file */
-	{
-		char *non_existing = tmpnam(NULL);
-		is = file_open( &file, non_existing, "rt" ); /* non-existing file */
-		CU_ASSERT_EQUAL( is, false );
-		CU_ASSERT_STRING_EQUAL( file.name, non_existing );
-	}
+	opt.data_length  = 1;
+	opt.data_columns = 16;
 
 	/* make test file */
 	{
 		FILE* in;
-	  	in = fopen( t_tmpname, "wt" );
+		in = fopen( t_tmpname, "wt" );
 		assert( in != NULL );
-		fputs( "hello", in );
-		fclose( in );
+		(void) fputs( "hello", in );
+		(void) fclose( in );
 	}
 
-	/* file_open() - normal file */
+	/* infile=not-exist */
 	{
-		is = file_open( &file, t_tmpname, "rt" );
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_STRING_EQUAL( file.name, t_tmpname );
-		CU_ASSERT_PTR_NOT_NULL( file.ptr );
-		CU_ASSERT_EQUAL( file.position, 0L );
-		CU_ASSERT_EQUAL( file.length,   5 );
-	}
-
-	/* file_seek() - failure */
-	{
-		val = file_seek( &file, -1 );
-		CU_ASSERT_NOT_EQUAL( val, 0 );
-	}
-	/* file_seek() - success */
-	{
-		val = file_seek( &file, 3 );
-		CU_ASSERT_EQUAL( val, 0 );
-		CU_ASSERT_EQUAL( file.position, 3 );
-	}
-
-	/* file_close() - success */
-	{
-		is = file_close( &file );
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_PTR_NULL( file.ptr );
-	}
-	/* file_close() - failure */
-	{
-		is = file_close( &file );
+		opt.infile_name = tmpnam(NULL); /* not exist */
+		is = bldump_setup( &memory, &infile, &outfile, &opt );
 		CU_ASSERT_EQUAL( is, false );
+		CU_ASSERT_PTR_NULL( infile.ptr );
 	}
 
-	/* file_read */
+	/* infile=exist, outfile=NULL(stdout) */
 	{
-		memory_t memory;
+		opt.infile_name  = t_tmpname;
+		opt.outfile_name = NULL;
+		is = bldump_setup( &memory, &infile, &outfile, &opt );
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_PTR_NOT_NULL( infile.ptr );
+		CU_ASSERT_EQUAL( outfile.ptr, stdout  );
+		CU_ASSERT_PTR_NOT_NULL( memory.data );
+		(void) file_close( &infile );
+		(void) file_close( &outfile );
+		(void) memory_free( &memory );
+	}
 
-		memory_init( &memory );
-		memory_allocate( &memory, 10 );
-		file_open( &file, t_tmpname, "rt" ); /* "hello" */
-		file_seek( &file, 1 );
-
-		is = file_read( &file, &memory, 2 );
-		CU_ASSERT_EQUAL( is,             true );
-		CU_ASSERT_EQUAL( file.position,  3 );
-		CU_ASSERT_EQUAL( memory.address, 1 );
-		CU_ASSERT_EQUAL( memory.size,    2 );
-
-		is = file_read( &file, &memory, 2 );
-		CU_ASSERT_EQUAL( is,             true );
-		CU_ASSERT_EQUAL( file.position,  5 );
-		CU_ASSERT_EQUAL( memory.address, 1 ); /* not changed */
-
-		is = file_read( &file, &memory, 0 );
+	/* infile=exist, outfile=can't open */
+	{
+		opt.infile_name  = t_tmpname;
+		opt.outfile_name = "" ;
+		is = bldump_setup( &memory, &infile, &outfile, &opt );
 		CU_ASSERT_EQUAL( is, false );
-		
-		file_close( &file );
-		memory_free( &memory );
+		CU_ASSERT_PTR_NULL( outfile.ptr );
+		(void) file_close( &infile );
 	}
 
-	/* file_write */
+	/* infile=exist, outfile=newfile */
 	{
-		memory_t memory;
-		char* s = "foo";
-		memory_init( &memory );
-		memory_allocate( &memory, 3 );
-		strncpy( (char*)memory.data, s, 3 );
-		memory.size = 3;
-
-		file_reset( &file );
-		file_open( &file, t_tmpname, "wt" );
-		file_write( &file, &memory );
-		CU_ASSERT( file.length == 3 );
-		file_close( &file );
-
-		memory_free( &memory );
-
-		{
-			FILE* in=fopen(t_tmpname,"rt");
-			char t[10];
-			fread( t, 10, 1, in );
-			CU_ASSERT_EQUAL( strlen( t ), 3 );
-			CU_ASSERT_STRING_EQUAL( t, "foo" );
-			fclose(in);
-		}
+		opt.infile_name  = t_tmpname;
+		opt.outfile_name = t_tmpname2;
+		is = bldump_setup( &memory, &infile, &outfile, &opt );
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_PTR_NOT_NULL( infile.ptr );
+		CU_ASSERT_PTR_NOT_NULL( outfile.ptr );
+		(void) file_close( &infile );
+		(void) file_close( &outfile );
+		(void) memory_free( &memory );
 	}
 
-	val = remove( t_tmpname );
-	assert( val == 0 );
+	opt.infile_name  = t_tmpname;
+	opt.outfile_name = NULL;
+
+	/* data_length=0(error) */
+	{
+		opt.data_length = 0;
+		is = bldump_setup( &memory, &infile, &outfile, &opt );
+		CU_ASSERT_EQUAL( is, false );
+		CU_ASSERT_PTR_NOT_NULL( infile.ptr );
+		CU_ASSERT_PTR_NOT_NULL( outfile.ptr );
+		CU_ASSERT_PTR_NULL( memory.data );
+		(void) file_close( &infile );
+		(void) file_close( &outfile );
+		opt.data_length = 1;
+	}
+
+	/* data_columns=0(error) */
+	{
+		opt.data_columns = 0;
+		is = bldump_setup( &memory, &infile, &outfile, &opt );
+		CU_ASSERT_EQUAL( is, false );
+		CU_ASSERT_PTR_NOT_NULL( infile.ptr );
+		CU_ASSERT_PTR_NOT_NULL( outfile.ptr );
+		CU_ASSERT_PTR_NULL( memory.data );
+		(void) file_close( &infile );
+		(void) file_close( &outfile );
+		opt.data_columns = 16;
+	}
+
+	{
+		int ret;
+		(void) memory_free( &memory );
+		ret = remove( t_tmpname  );
+		assert( ret == 0 );
+		ret = remove( t_tmpname2 );
+		assert( ret == 0 );
+	}
 }
 
 /*!
- * @brief test of write_hex().
+ * @brief test of HEX format of bldump_write().
  */
-void tc_write_hex(void)
+static void tc_bldump_hex(void)
 {
 	file_t outfile;
 	memory_t memory;
@@ -273,23 +208,25 @@ void tc_write_hex(void)
 	memory_init( &memory );
 	options_reset( &opt );
 
-	memory_allocate( &memory, 16 );
+	(void) memory_allocate( &memory, 16 );
 	strcpy( (char*)memory.data, "0123456789ABCDEF" );
-	memory.size = 16;
+	memory.size    = 16;
+	memory.address = 0xAAAA5555;
 
 	/* 30,31,32, .. 56,46 */
 	{
 		FILE* in;
 		char buf[100];
 		size_t reads;
-		opt.show_address = false;
-		opt.data_length  = 1;
+		opt.output_type   = HEX;
+		opt.show_address  = false;
+		opt.data_length   = 1;
 		opt.col_separator = ",";
 		opt.row_separator = "\n";
 
-		file_open( &outfile, t_tmpname, "wb" );
-		write_hex( &outfile, &memory, &opt );
-		file_close( &outfile );
+		(void) file_open( &outfile, t_tmpname, "wb" );
+		(void) bldump_write( &memory, &outfile, &opt );
+		(void) file_close( &outfile );
 
 		in = fopen( t_tmpname, "rb" );
 		reads = fread( buf, 1, 100, in );
@@ -302,19 +239,20 @@ void tc_write_hex(void)
 		FILE* in;
 		char buf[100];
 		size_t reads;
-		opt.show_address = false;
-		opt.data_length  = 5;
+		opt.output_type   = HEX;
+		opt.show_address  = true;
+		opt.data_length   = 5;
 		opt.col_separator = "-";
 		opt.row_separator = "\n";
 
-		file_open( &outfile, t_tmpname, "wb" );
-		write_hex( &outfile, &memory, &opt );
-		file_close( &outfile );
+		(void) file_open( &outfile, t_tmpname, "wb" );
+		(void) bldump_write( &memory, &outfile, &opt );
+		(void) file_close( &outfile );
 
 		in = fopen( t_tmpname, "rb" );
 		reads = fread( buf, 1, 100, in );
-		CU_ASSERT_EQUAL( reads, 36 );
-		CU_ASSERT_NSTRING_EQUAL( buf, "3031323334-3536373839-4142434445-46\n", 36 );
+		CU_ASSERT_EQUAL( reads, 46 );
+		CU_ASSERT_NSTRING_EQUAL( buf, "aaaa5555: 3031323334-3536373839-4142434445-46\n", 46 );
 	}
 
 }
@@ -322,7 +260,7 @@ void tc_write_hex(void)
 /*!
  * @brief test of bldump_read().
  */
-void tc_bldump_read(void)
+static void tc_bldump_read(void)
 {
 	int ret;
 	options_t opt;
@@ -340,11 +278,11 @@ void tc_bldump_read(void)
 		assert( in != NULL );
 		fclose( in );
 
-		file_open( &infile, t_tmpname, "rt" );
+		(void)file_open( &infile, t_tmpname, "rt" );
 		ret = bldump_read( &memory, &infile, &opt );
 		CU_ASSERT_EQUAL( ret, 1 );
 
-		file_close( &infile );
+		(void)file_close( &infile );
 	}
 
 	/* normal text */
@@ -354,7 +292,7 @@ void tc_bldump_read(void)
 		fputs( "The quick brown fox jumps over the lazy dog", in );
 		fclose( in );
 
-		file_open( &infile, t_tmpname, "rt" );
+		(void)file_open( &infile, t_tmpname, "rt" );
 
 		/* 1 */
 		ret = bldump_read( &memory, &infile, &opt );
@@ -376,7 +314,7 @@ void tc_bldump_read(void)
 		CU_ASSERT_EQUAL( memory.size,    0 );
 		CU_ASSERT_EQUAL( memory.address, 0 );
 
-		file_close( &infile );
+		(void)file_close( &infile );
 	}
 
 	remove( t_tmpname );
@@ -386,7 +324,7 @@ void tc_bldump_read(void)
 /*!
  * @brief test of bldump_write().
  */
-void tc_bldump_write(void)
+static void tc_bldump_write(void)
 {
 }
 
@@ -394,11 +332,10 @@ CU_ErrorCode ts_bldump_regist(void)
 {
 	CU_TestInfo ts_bldump_cases[] = {
 		{ "help()",					tc_help },
-		{ "memory_*()",				tc_memory_x },
-		{ "file_*()",				tc_file_x },
-		{ "write_hex()",			tc_write_hex },
+		{ "strfree()",				tc_strfree },
+		{ "bldump_setup()",			tc_bldump_setup },
 		{ "bldump_read()",			tc_bldump_read },
-		{ "bldump_write()",			tc_bldump_write },
+		{ "bldump_write(HEX)",		tc_bldump_hex },
 		CU_TEST_INFO_NULL
 	};
 

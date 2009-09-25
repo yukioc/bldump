@@ -43,7 +43,7 @@ static void tc_verbose_printf(void)
 /*!
  * @brief test of 'verbose_die()'.
  */
-void tc_verbose_die(void)
+static void tc_verbose_die(void)
 {
 	/*** pre-conditinons ***/
 	assert( verbose_level == VERB_DEFAULT );
@@ -99,7 +99,7 @@ static int ts_verbose_init(void)
  */
 static int ts_verbose_cleanup(void)
 {
-	if ( verbose_out != stdout ) fclose( verbose_out );
+	if ( verbose_out != stdout ) (void)fclose( verbose_out );
 	verbose_out = stdout;
 	return 0;
 }

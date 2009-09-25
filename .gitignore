@@ -2,9 +2,11 @@
 *.gcov
 *.gcno
 *.gcda
+*.tmp
 .depend
 CUnit
 bldump
 bldump-test
 bldump.exe
 bldump-test.exe
+html
