@@ -18,24 +18,23 @@ DESCRIPTION
 INSTALLATION
 
   type 'make test' to run unit tests.
-  This command target require gcc, gcov and CUnit library. But CUnit library is builded in this make.
-  If results of unit test have any failures, you shouldnot use bldump in this version.
+  This command-target require gcc, gcov and CUnit library.  But CUnit library is
+  builded in this make. If results of unit test have any failures, you shouldnot
+  use bldump in this version.
 
-  type 'make clean all' to build bldump.
-  move bldump to your directory manually.
+  type 'make clean all' to build 'bldump'.
+  and move 'bldump' to your directory manually.
 
 HISTORY
 
+  v.0.1
+    * hexadecimal display
+    * "-h,-?,--help" shows help message.
+    * added test feature - splint, CUnit add gcov.
+
 ROADMAP
 
-  v.0.x
-    * README
-    * Makefile
-    * CUnit testing
-    * display help message
-
   v.1.0
-    * hex dump
     * decimal dump
     * display by CSV, TSV format
     * set offset to start, size of dump
