@@ -34,7 +34,10 @@ const static char *usage[] = {
 	"",
 	"options:",
 	"  -h -? --help",
-	"    this help.",
+	"    display command line help message, and exit application.",
+	"",
+	"  -l num, --length=num",
+	"    The number of data bytes of displaying(default length is 1).",
 	""
 };
 
@@ -311,7 +314,7 @@ void options_reset( options_t* opt )
 	opt->outfile_name   = NULL;
 
 	/*** container ***/
-	opt->data_length    = 1;
+	opt->data_length    = 0;
 	opt->data_columns   = 16;
 
 	/*** outfile ***/
@@ -365,16 +368,24 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 	int i;
 	size_t a; /* for macro */
 	char *sub;
-	char *endp;
 
 #define strlcmp(l,r) (strncmp(l,r,strlen(l)))
 #define ARG_FLAG(s) (strcmp(s,argv[i])==0)
 #define ARG_SPARAM(s) (strcmp(s,argv[i])==0 && (i+1) < argc && (sub=argv[++i]))
 #define ARG_LPARAM(s) (strlcmp(s,argv[i])==0 && (a=strlen(s))<strlen(argv[i]) && (sub=&argv[i][a]))
 	for (i = 1; i < argc; i++) {
+		/* help */
 		if (ARG_FLAG("-?") || ARG_FLAG("-h") || ARG_FLAG("--help")) {
 			(void) help();
 			return false;
+		/* memory */
+		} else if ( ARG_SPARAM("-l") || ARG_LPARAM("--length=") ) {
+			if ( opt->data_length != 0 ) {
+				(void)verbose_printf( VERB_ERR, "Error: can't set opt -r and -l at once.\n" );
+				return false;
+			}
+			opt->data_length = (int)strtoul( sub, NULL, 0 );
+		/* error */
 		} else if ( argv[i][0] == '-' ) {
 			(void)verbose_printf( VERB_ERR, "Error: unsupported option - %s\n", argv[i] );
 			return false;
@@ -405,6 +416,9 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 	}
 	if ( opt->row_separator == NULL ) {
 		opt->row_separator  = strclone( "\n" );
+	}
+	if ( opt->data_length == 0 ) {
+		opt->data_length = 1;
 	}
 
 	return true;

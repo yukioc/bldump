@@ -124,7 +124,7 @@ static void tc_opt_noopt(void)
 	char* argv[] = { "bldump", "-" };
 	options_reset( &opt );
 	is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
-	CU_ASSERT( is == false );
+	CU_ASSERT_EQUAL( is, false );
 }
 
 /*!
@@ -137,7 +137,7 @@ static void tc_opt_noarg(void)
 	char* argv[] = { "bldump" };
 	options_reset( &opt );
 	is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
-	CU_ASSERT( is == false );
+	CU_ASSERT_EQUAL( is, false );
 }
 
 /*!
@@ -153,21 +153,21 @@ static void tc_opt_help(void)
 		char* argv[] = { "bldump", "-h" };
 		options_reset( &opt );
 		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( is == false );
+		CU_ASSERT_EQUAL( is, false );
 	}
 	/* -? */
 	{
 		char* argv[] = { "bldump", "-?" };
 		options_reset( &opt );
 		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( is == false );
+		CU_ASSERT_EQUAL( is, false );
 	}
 	/* --help */
 	{
 		char* argv[] = { "bldump", "--help" };
 		options_reset( &opt );
 		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( is == false );
+		CU_ASSERT_EQUAL( is, false );
 	}
 }
 
@@ -184,8 +184,8 @@ static void tc_opt_infile_outfile(void)
 		char* argv[] = { "bldump", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( is == true );
-		CU_ASSERT( strcmp( opt.infile_name, "infile" ) == 0 );
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_STRING_EQUAL( opt.infile_name, "infile" );
 		CU_ASSERT_PTR_NULL( opt.outfile_name );
 	}
 
@@ -196,20 +196,60 @@ static void tc_opt_infile_outfile(void)
 		char* argv[] = { "bldump", "infile", "outfile" };
 		options_reset( &opt );
 		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
-		CU_ASSERT( is == true );
-		CU_ASSERT( strcmp( opt.infile_name, "infile" ) == 0 );
-		CU_ASSERT( strcmp( opt.outfile_name, "outfile" ) == 0 );
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_STRING_EQUAL( opt.infile_name, "infile" );
+		CU_ASSERT_STRING_EQUAL( opt.outfile_name, "outfile" );
 	}
+}
+
+/*!
+ * @brief test infile and outfile
+ */
+static void tc_opt_length(void)
+{
+	options_t opt;
+	bool is;
+
+	/* -l */
+	{
+		char* argv[] = { "bldump", "-l", "3", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.data_length, 3 );
+		CU_ASSERT_PTR_NULL( opt.outfile_name );
+	}
+
+	/* --length */
+	{
+		char* argv[] = { "bldump", "--length=4", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.data_length, 4 );
+		CU_ASSERT_PTR_NULL( opt.outfile_name );
+	}
+
+	/* -l --length (error for conflict of other options) */
+	{
+		char* argv[] = { "bldump", "-l", "3", "--length=4", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); /* duplicated option */
+		CU_ASSERT_EQUAL( is, false );
+	}
+
 }
 
 CU_ErrorCode ts_opt_regist(void)
 {
 	CU_TestInfo ts_opt_cases[] = {
-		{ "options_clear()",					tc_options_clear },
-		{ "options_load() : (noarg)",			tc_opt_noarg },
-		{ "options_load() : -",					tc_opt_noopt },
-		{ "options_load() : -h|-?|--help",		tc_opt_help },
-		{ "options_load() : infile outfile",	tc_opt_infile_outfile },
+		{ "options_clear()", tc_options_clear },
+		{ "options_load( bldump )", tc_opt_noarg },
+		{ "options_load( bldump - )", tc_opt_noopt },
+		{ "options_load( bldump -h|-?|--help )", tc_opt_help },
+		{ "options_load( bldump infile outfile )", tc_opt_infile_outfile },
+		{ "options_load( bldump -l|--length infile )", tc_opt_length },
 		CU_TEST_INFO_NULL
 	};
 

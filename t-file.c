@@ -236,12 +236,12 @@ static void tc_file_write(void)
 CU_ErrorCode ts_file_regist(void)
 {
 	CU_TestInfo ts_file_cases[] = {
-		{ "file_reset()",	tc_file_reset },
-		{ "file_open()",	tc_file_open },
-		{ "file_close()",	tc_file_close },
-		{ "file_seek()",	tc_file_seek },
-		{ "file_read()",	tc_file_read },
-		{ "file_write()",	tc_file_write },
+		{ "file_reset()" , tc_file_reset } , 
+		{ "file_open()"  , tc_file_open }  , 
+		{ "file_close()" , tc_file_close } , 
+		{ "file_seek()"  , tc_file_seek }  , 
+		{ "file_read()"  , tc_file_read }  , 
+		{ "file_write()" , tc_file_write } , 
 		CU_TEST_INFO_NULL
 	};
 

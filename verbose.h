@@ -13,22 +13,22 @@
 #include <stdio.h>
 
 #if 0
-#define VERBOSE_TEST		/*!< verbose::test() を有効にする */
+#define VERBOSE_TEST /*!< use verbose::test() function */
 #endif
 
 enum verbose_level_t {
-	VERB_DEFAULT = 6,	//!< verbose_levelデフォルト値
-	VERB_UNUSE   = 0,	//!< 使用しない
-	VERB_EMERG   = 0,	//!< system is unusable
-	VERB_ALERT   = 1,	//!< action must be taken immediately
-	VERB_CRIT    = 2,	//!< critical conditions
-	VERB_ERR     = 3,	//!< error conditions
-	VERB_WARNING = 4,	//!< warning conditions
-	VERB_NOTICE  = 5,	//!< normal but significant conditions
-	VERB_INFO    = 6,	//!< informational
-	VERB_DEBUG   = 7,	//!< debug level messages
-	VERB_LOG     = 7,	//!< ログ出力
-	VERB_TRACE   = 9	//!< 内部トレース出力
+	VERB_DEFAULT = 6, /*!< verbose_level default value. */
+	VERB_UNUSE   = 0, /*!< not used this value. */
+	VERB_EMERG   = 0, /*!< system is unusable. */
+	VERB_ALERT   = 1, /*!< action must be taken immediately. */
+	VERB_CRIT    = 2, /*!< critical conditions. */
+	VERB_ERR     = 3, /*!< error conditions. */
+	VERB_WARNING = 4, /*!< warning conditions. */
+	VERB_NOTICE  = 5, /*!< normal but significant conditions. */
+	VERB_INFO    = 6, /*!< informational. */
+	VERB_DEBUG   = 7, /*!< debug level messages. */
+	VERB_LOG     = 7, /*!< log. */
+	VERB_TRACE   = 9  /*!< trace. */
 };
 
 extern unsigned int   verbose_level;

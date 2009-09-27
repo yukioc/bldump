@@ -324,11 +324,11 @@ static void tc_bldump_hex(void)
 CU_ErrorCode ts_bldump_regist(void)
 {
 	CU_TestInfo ts_bldump_cases[] = {
-		{ "help()",					tc_help },
-		{ "strfree()",				tc_strfree },
-		{ "bldump_setup()",			tc_bldump_setup },
-		{ "bldump_read()",			tc_bldump_read },
-		{ "bldump_write(HEX)",		tc_bldump_hex },
+		{ "help()"            , tc_help }         , 
+		{ "strfree()"         , tc_strfree }      , 
+		{ "bldump_setup()"    , tc_bldump_setup } , 
+		{ "bldump_read()"     , tc_bldump_read }  , 
+		{ "bldump_write(HEX)" , tc_bldump_hex }   , 
 		CU_TEST_INFO_NULL
 	};
 

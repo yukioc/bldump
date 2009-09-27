@@ -7,6 +7,7 @@ SYNOPSYS
   bldump [options] [infile [outfile]]
   bldump -h
   bldump --help
+  bldump -l 1
 
 DESCRIPTION
 
@@ -14,6 +15,9 @@ DESCRIPTION
 
   -h -? --help
     display command line help message, and exit application.
+
+  -l num, --length=num
+    The number of data bytes of displaying(default length is 1).
 
 INSTALLATION
 
@@ -33,6 +37,9 @@ HISTORY
     * added test feature - splint, CUnit add gcov.
 
 ROADMAP
+
+  v.0.x
+    * set size of data and number of columns
 
   v.1.0
     * decimal dump

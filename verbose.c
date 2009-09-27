@@ -14,9 +14,9 @@
 
 #ifdef CUNIT
 void t_exit(int);
-#define EXIT	t_exit
+#define EXIT t_exit
 #else
-#define EXIT	exit
+#define EXIT exit
 #endif
 
 /*!

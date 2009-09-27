@@ -114,9 +114,9 @@ static int ts_verbose_cleanup(void)
 CU_ErrorCode ts_verbose_regist(void)
 {
 	CU_TestInfo ts_verbose_cases[] = {
-		{ "verbose_level" ,		tc_verbose_level },
-		{ "verbose_printf()" ,	tc_verbose_printf },
-		{ "verbose_die()" ,		tc_verbose_die },
+		{ "verbose_level"    , tc_verbose_level }  , 
+		{ "verbose_printf()" , tc_verbose_printf } , 
+		{ "verbose_die()"    , tc_verbose_die }    , 
 		CU_TEST_INFO_NULL
 	};
 

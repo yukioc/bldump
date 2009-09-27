@@ -142,10 +142,10 @@ static void tc_memory_free(void)
 CU_ErrorCode ts_memory_regist(void)
 {
 	CU_TestInfo ts_memory_cases[] = {
-		{ "memory_init()",		tc_memory_init },
-		{ "memory_allocate()",	tc_memory_allocate },
-		{ "memory_clear()",		tc_memory_clear },
-		{ "memory_free()",		tc_memory_free },
+		{ "memory_init()"     , tc_memory_init }     , 
+		{ "memory_allocate()" , tc_memory_allocate } , 
+		{ "memory_clear()"    , tc_memory_clear }    , 
+		{ "memory_free()"     , tc_memory_free }     , 
 		CU_TEST_INFO_NULL
 	};
 

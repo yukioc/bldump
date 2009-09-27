@@ -60,7 +60,7 @@ static void tc_main(void)
 CU_ErrorCode ts_main_regist(void)
 {
 	CU_TestInfo ts_main_cases[] = {
-		{ "bldump",					tc_main },
+		{ "bldump", tc_main },
 		CU_TEST_INFO_NULL
 	};
 
