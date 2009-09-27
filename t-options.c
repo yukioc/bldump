@@ -203,7 +203,7 @@ static void tc_opt_infile_outfile(void)
 }
 
 /*!
- * @brief test infile and outfile
+ * @brief test -l, --length
  */
 static void tc_opt_length(void)
 {
@@ -227,7 +227,6 @@ static void tc_opt_length(void)
 		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.data_length, 4 );
-		CU_ASSERT_PTR_NULL( opt.outfile_name );
 	}
 
 	/* -l --length (error for conflict of other options) */
@@ -241,6 +240,34 @@ static void tc_opt_length(void)
 
 }
 
+/*!
+ * @brief test -f, --fields
+ */
+static void tc_opt_fields(void)
+{
+	options_t opt;
+	bool is;
+
+	/* -f */
+	{
+		char* argv[] = { "bldump", "-f", "5", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.data_fields, 5 );
+		CU_ASSERT_PTR_NULL( opt.outfile_name );
+	}
+
+	/* --fields */
+	{
+		char* argv[] = { "bldump", "--fields=6", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.data_fields, 6 );
+	}
+}
+
 CU_ErrorCode ts_opt_regist(void)
 {
 	CU_TestInfo ts_opt_cases[] = {
@@ -250,6 +277,7 @@ CU_ErrorCode ts_opt_regist(void)
 		{ "options_load( bldump -h|-?|--help )", tc_opt_help },
 		{ "options_load( bldump infile outfile )", tc_opt_infile_outfile },
 		{ "options_load( bldump -l|--length infile )", tc_opt_length },
+		{ "options_load( bldump -f|--fields infile )", tc_opt_fields },
 		CU_TEST_INFO_NULL
 	};
 

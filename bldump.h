@@ -25,7 +25,7 @@ typedef struct {
 
 	//container
 	int			data_length;
-	int			data_columns;
+	int			data_fields;
 
 	//outfile
 	OUTPUT_TYPE output_type;   /*!< argument -d, -u, -b */

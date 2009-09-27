@@ -37,7 +37,10 @@ const static char *usage[] = {
 	"    display command line help message, and exit application.",
 	"",
 	"  -l num, --length=num",
-	"    The number of data bytes of displaying(default length is 1).",
+	"    The number of data bytes of displaying(default:1).",
+	"",
+	"  -f num, --fields=num",
+	"    The number of data fields of displaying at a line(default:16).",
 	""
 };
 
@@ -81,18 +84,15 @@ int main( int argc, char* argv[] )
 	file_t    outfile;
 	memory_t  memory;
 
-	/*** prepare ***/
-
-	options_reset( &opt );  
-	memory_init( &memory );
-	file_reset( &infile );
-	file_reset( &outfile );
-
 	verbose_level = VERB_DEFAULT;
 
 #ifdef CUNIT
 	/* run test */
+	t_stdin = stdin;
+	t_stdout = stdout;
+	t_stderr = stderr;
 	if ( argc == 2 && strcmp("--test", argv[1]) == 0  ) {
+		unsigned int fails = 0;
 		extern CU_ErrorCode ts_verbose_regist(void);
 		extern CU_ErrorCode ts_opt_regist(void);
 		extern CU_ErrorCode ts_memory_regist(void);
@@ -108,16 +108,19 @@ int main( int argc, char* argv[] )
 		if ( cue == CUE_SUCCESS ) cue = ts_bldump_regist();
 		if ( cue == CUE_SUCCESS ) cue = ts_main_regist();
 		/* use CUnit Basic I/F */
-		{
-			unsigned int fails;
-			CU_basic_set_mode(CU_BRM_VERBOSE);
-			CU_basic_run_tests();
-			fails = CU_get_number_of_failures();
-			CU_cleanup_registry();
-		}
-		return CU_get_error();
+		CU_basic_set_mode(CU_BRM_VERBOSE);
+		CU_basic_run_tests();
+		fails = CU_get_number_of_failures();
+		CU_cleanup_registry();
+		return (fails != 0) ? 1 : CU_get_error();
 	}
 #endif
+
+	/*** prepare ***/
+	options_reset( &opt );  
+	memory_init( &memory );
+	file_reset( &infile );
+	file_reset( &outfile );
 
 	/*** arguments ***/
 	is_ok = options_load( &opt, argc, argv  );
@@ -194,11 +197,11 @@ bool bldump_setup( memory_t* memory, file_t* infile, file_t* outfile, options_t*
 		(void)verbose_printf( VERB_ERR, "Error: wrong data_length=%d\n", opt->data_length );
 		return false;
 	}
-	if ( opt->data_columns <= 0 ) {
-		(void)verbose_printf( VERB_ERR, "Error: wrong data_columns=%d\n", opt->data_columns );
+	if ( opt->data_fields<= 0 ) {
+		(void)verbose_printf( VERB_ERR, "Error: wrong data_fields=%d\n", opt->data_fields);
 		return false;
 	}
-	size = (size_t) (opt->data_length * opt->data_columns);
+	size = (size_t) (opt->data_length * opt->data_fields);
 	
 	is = memory_allocate( memory, size );
 
@@ -315,7 +318,7 @@ void options_reset( options_t* opt )
 
 	/*** container ***/
 	opt->data_length    = 0;
-	opt->data_columns   = 16;
+	opt->data_fields    = 0;
 
 	/*** outfile ***/
 	opt->output_type    = HEX;
@@ -385,6 +388,8 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 				return false;
 			}
 			opt->data_length = (int)strtoul( sub, NULL, 0 );
+		} else if ( ARG_SPARAM("-f") || ARG_LPARAM("--fields=") ) {
+			opt->data_fields= (int)strtoul( sub, NULL, 0 );
 		/* error */
 		} else if ( argv[i][0] == '-' ) {
 			(void)verbose_printf( VERB_ERR, "Error: unsupported option - %s\n", argv[i] );
@@ -419,6 +424,9 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 	}
 	if ( opt->data_length == 0 ) {
 		opt->data_length = 1;
+	}
+	if ( opt->data_fields == 0 ) {
+		opt->data_fields = 16;
 	}
 
 	return true;

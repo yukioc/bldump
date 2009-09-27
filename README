@@ -17,7 +17,10 @@ DESCRIPTION
     display command line help message, and exit application.
 
   -l num, --length=num
-    The number of data bytes of displaying(default length is 1).
+    The number of data bytes of displaying(default:1).
+
+  -c num, --columns=num
+    The number of data fields of displaying at a line(default:16).
 
 INSTALLATION
 

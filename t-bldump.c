@@ -99,8 +99,8 @@ static void tc_bldump_setup(void)
 	file_reset( &outfile );
 	options_reset( &opt );
 
-	opt.data_length  = 1;
-	opt.data_columns = 16;
+	opt.data_length = 1;
+	opt.data_fields = 16;
 
 	/* make test file */
 	{
@@ -172,9 +172,9 @@ static void tc_bldump_setup(void)
 		opt.data_length = 1;
 	}
 
-	/* data_columns=0(error) */
+	/* data_fields=0(error) */
 	{
-		opt.data_columns = 0;
+		opt.data_fields = 0;
 		is = bldump_setup( &memory, &infile, &outfile, &opt );
 		CU_ASSERT_EQUAL( is, false );
 		CU_ASSERT_PTR_NOT_NULL( infile.ptr );
@@ -182,7 +182,7 @@ static void tc_bldump_setup(void)
 		CU_ASSERT_PTR_NULL( memory.data );
 		(void) file_close( &infile );
 		(void) file_close( &outfile );
-		opt.data_columns = 16;
+		opt.data_fields = 16;
 	}
 
 	{
