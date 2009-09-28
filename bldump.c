@@ -41,6 +41,9 @@ const static char *usage[] = {
 	"",
 	"  -f num, --fields=num",
 	"    The number of data fields of displaying at a line(default:16).",
+	"",
+	"  -a, --show-address",
+	"    displays data address of inputs(default:not display).",
 	""
 };
 
@@ -390,6 +393,9 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 			opt->data_length = (int)strtoul( sub, NULL, 0 );
 		} else if ( ARG_SPARAM("-f") || ARG_LPARAM("--fields=") ) {
 			opt->data_fields= (int)strtoul( sub, NULL, 0 );
+		/* output */
+		} else if ( ARG_FLAG("-a") || ARG_FLAG("--show-address") ) {
+			opt->show_address = true;
 		/* error */
 		} else if ( argv[i][0] == '-' ) {
 			(void)verbose_printf( VERB_ERR, "Error: unsupported option - %s\n", argv[i] );

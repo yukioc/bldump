@@ -14,13 +14,16 @@ DESCRIPTION
   The options are as follows: 
 
   -h -? --help
-    display command line help message, and exit application.
+    displays command line help message, and exit application.
 
   -l num, --length=num
     The number of data bytes of displaying(default:1).
 
-  -c num, --columns=num
+  -f num, --fields=num
     The number of data fields of displaying at a line(default:16).
+
+  -a
+    displays data address of inputs(default:not display).
 
 INSTALLATION
 
@@ -36,13 +39,14 @@ HISTORY
 
   v.0.1
     * hexadecimal display
-    * "-h,-?,--help" shows help message.
+    * "-h,-?,--help" display help message.
     * added test feature - splint, CUnit add gcov.
 
 ROADMAP
 
   v.0.x
-    * set size of data and number of columns
+    * "-l,-f" set size of data and number of fields
+    * "-a" displays data address of inputs.
 
   v.1.0
     * decimal dump

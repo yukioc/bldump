@@ -268,6 +268,34 @@ static void tc_opt_fields(void)
 	}
 }
 
+/*!
+ * @brief test -a, --show-address
+ */
+static void tc_opt_address(void)
+{
+	options_t opt;
+	bool is;
+
+	/* -a */
+	{
+		char* argv[] = { "bldump", "-a", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.show_address, true );
+		CU_ASSERT_PTR_NULL( opt.outfile_name );
+	}
+
+	/* --show_address */
+	{
+		char* argv[] = { "bldump", "--show-address", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.show_address, true );
+	}
+}
+
 CU_ErrorCode ts_opt_regist(void)
 {
 	CU_TestInfo ts_opt_cases[] = {
@@ -278,6 +306,7 @@ CU_ErrorCode ts_opt_regist(void)
 		{ "options_load( bldump infile outfile )", tc_opt_infile_outfile },
 		{ "options_load( bldump -l|--length infile )", tc_opt_length },
 		{ "options_load( bldump -f|--fields infile )", tc_opt_fields },
+		{ "options_load( bldump -a|--show-address )", tc_opt_address },
 		CU_TEST_INFO_NULL
 	};
 
