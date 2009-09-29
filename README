@@ -4,26 +4,45 @@ NAME
 
 SYNOPSYS
 
-  bldump [options] [infile [outfile]]
-  bldump -h
-  bldump --help
-  bldump -l 1
+  bldump [<options>] [<infile> [<outfile>]]
 
 DESCRIPTION
 
   The options are as follows: 
 
-  -h -? --help
-    displays command line help message, and exit application.
+OPTIONS
+
+  <infile>
+    dump file.
+
+  <outfile>
+    output file name. if not specified, output stdout.
+
+  -a, --show-address
+    displays data address preceded each line.
+    if not specified, doesn't display.
+
+  -f <num>, --fields=<num>
+    The number of data fields of displaying at a line(default:16).
 
   -l num, --length=num
     The number of data bytes of displaying(default:1).
 
-  -f num, --fields=num
-    The number of data fields of displaying at a line(default:16).
+  -h -? --help
+    displays command line help message, and exit application.
 
-  -a
-    displays data address of inputs(default:not display).
+  --version
+    bldump version, build date.
+
+EXAMPLES
+
+  bldump -a
+    hexadecimal dump with address. 
+
+    $ echo "0123456789ABCDEFGHIJK" > exp.txt
+    $ ./bldump -a exp.txt 
+    00000000: 30 31 32 33 34 35 36 37 38 39 41 42 43 44 45 46
+    00000010: 47 48 49 4a 4b 0a
 
 INSTALLATION
 

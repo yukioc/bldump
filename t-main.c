@@ -45,11 +45,10 @@ static int ts_main_cleanup(void)
 }
 
 /*!
- * @brief test bldump::help().
+ * @brief test "bldump"
  */
-static void tc_main(void)
+static void tc_main_help(void)
 {
-	/* bldump (noopt) */
 	int ret;
 	char* argv[] = { "bldump" };
 
@@ -57,10 +56,62 @@ static void tc_main(void)
 	CU_ASSERT_EQUAL( ret, EXIT_FAILURE );
 }
 
+/*!
+ * @brief test "bldump -a"
+ */
+static void tc_main_hex(void)
+{
+	/* bldump -a */
+	int ret;
+	char* argv[] = { "bldump", "-a", t_tmpname };
+	char* exp = "0123456789ABCDEFGHIJK";
+	char act[80];
+
+	fseek( t_stdout, 0, SEEK_SET );
+
+	/* make input data */
+	FILE* fp = fopen( t_tmpname, "wb" );
+	assert( fp != NULL );
+	fputs( exp, fp );
+	fclose( fp );
+
+	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	CU_ASSERT_EQUAL( ret, 0 );
+
+	fflush( t_stdout );
+	fseek( t_stdout, 0, SEEK_SET );
+	fgets(act, sizeof(act), t_stdout);
+	CU_ASSERT_NSTRING_EQUAL( act, "00000000: 30 31 32 33 34 35 36 37 38 39 41 42 43 44 45 46", 57 );
+	fgets(act, sizeof(act), t_stdout);
+	CU_ASSERT_NSTRING_EQUAL( act, "00000010: 47 48 49 4a 4b", 24 );
+}
+
+/*!
+ * @brief test "bldump --version"
+ */
+static void tc_main_ver(void)
+{
+	/* bldump --version */
+	int ret;
+	char* argv[] = { "bldump", "--version" };
+	char  act[80];
+
+	fseek( t_stdout, 0, SEEK_SET );
+	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	CU_ASSERT_EQUAL( ret, 0 );
+
+	fflush( t_stdout );
+	fseek( t_stdout, 0, SEEK_SET );
+	fgets(act, sizeof(act), t_stdout);
+	CU_ASSERT_NSTRING_EQUAL( act, "bldump version ", 15 );
+}
+
 CU_ErrorCode ts_main_regist(void)
 {
 	CU_TestInfo ts_main_cases[] = {
-		{ "bldump", tc_main },
+		{ "bldump", tc_main_help },
+		{ "bldump -a", tc_main_hex },
+		{ "bldump --version", tc_main_ver },
 		CU_TEST_INFO_NULL
 	};
 

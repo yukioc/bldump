@@ -3,7 +3,6 @@
  * @brief bldump - simple decimal, hex dump to text file, CSV ..
  * @author yukio
  * @since 2009-09-20 
- * @date 2009-09-20 Initial commit
  */
 
 #include <stdio.h>
@@ -21,29 +20,33 @@
 #include "bldump.h"
 
 /*** interface ***/
-#define VERSION		"Version 0.0x"
+#define VERSION		"version 0.1.x"
 #define DATE		"(" __DATE__ ")"
-#define COPYRIGHT	"by yukio"
-#define ABOUT		"[bldump] simple decimal, hex dump with Binary, Text, CSV.. " VERSION " " DATE " " COPYRIGHT "\n\n"
 
 const static char *usage[] = {
-	"Usage: bldump [options] [infile [outfile]]",
+	"Usage: bldump [<options>] [<infile> [<outfile>]]",
 	"",
-	"  infile  dump file.",
-	"  outfile output(stdout).",
+	"  <infile>",
+	"    dump file.",
 	"",
-	"options:",
-	"  -h -? --help",
-	"    display command line help message, and exit application.",
+	"  <outfile>",
+	"    output file name. if not specified, output stdout.",
+	"",
+	"  -a, --show-address",
+	"    displays data address preceded each line.",
+	"    if not specified, doesn't display.",
+	"",
+	"  -f <num>, --fields=<num>",
+	"    The number of data fields of displaying at a line(default:16).",
 	"",
 	"  -l num, --length=num",
 	"    The number of data bytes of displaying(default:1).",
 	"",
-	"  -f num, --fields=num",
-	"    The number of data fields of displaying at a line(default:16).",
+	"  -h -? --help",
+	"    displays command line help message, and exit application.",
 	"",
-	"  -a, --show-address",
-	"    displays data address of inputs(default:not display).",
+	"  --version",
+	"    bldump version, build date.",
 	""
 };
 
@@ -89,11 +92,12 @@ int main( int argc, char* argv[] )
 
 	verbose_level = VERB_DEFAULT;
 
+	if ( argc == 2 && strcmp("--version", argv[1]) == 0  ) {
+		fprintf( STDOUT, "bldump %s %s\n", VERSION, DATE );
+		return 0;
+	}
 #ifdef CUNIT
 	/* run test */
-	t_stdin = stdin;
-	t_stdout = stdout;
-	t_stderr = stderr;
 	if ( argc == 2 && strcmp("--test", argv[1]) == 0  ) {
 		unsigned int fails = 0;
 		extern CU_ErrorCode ts_verbose_regist(void);
@@ -117,7 +121,9 @@ int main( int argc, char* argv[] )
 		CU_cleanup_registry();
 		return (fails != 0) ? 1 : CU_get_error();
 	}
+	assert( t_stdin != NULL && t_stdout != NULL && t_stderr != NULL );
 #endif
+
 
 	/*** prepare ***/
 	options_reset( &opt );  
@@ -186,7 +192,7 @@ bool bldump_setup( memory_t* memory, file_t* infile, file_t* outfile, options_t*
 	/* outfile */
 	if ( opt->outfile_name == NULL ) {
 		(void)verbose_printf( VERB_LOG, "bldump: output to `stdout\' insted of outfile.\n" );
-		outfile->ptr    = stdout;
+		outfile->ptr    = STDOUT;
 		outfile->length = 0;
 	} else {
 		if ( file_open( outfile, opt->outfile_name, "wb" ) == false ) {
@@ -615,7 +621,7 @@ bool file_close( file_t* file )
 {
 	bool retval = true;
 
-	if ( (file->ptr == stdout) || (file->ptr == stderr) || (file->ptr == stdin) ) {
+	if ( (file->ptr == STDOUT) || (file->ptr == STDERR) || (file->ptr == STDIN) ) {
 	} else if ( file->ptr != NULL ) {
 		(void)fclose( file->ptr );
 	} else {
