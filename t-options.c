@@ -280,6 +280,7 @@ static void tc_opt_address(void)
 	{
 		char* argv[] = { "bldump", "-a", "infile" };
 		options_reset( &opt );
+		CU_ASSERT_EQUAL( opt.show_address, false );
 		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.show_address, true );
