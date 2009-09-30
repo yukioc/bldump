@@ -188,6 +188,9 @@ bool bldump_setup( memory_t* memory, file_t* infile, file_t* outfile, options_t*
 		(void)verbose_printf( VERB_ERR, "Error: can't open infile - %s\n", opt->infile_name );
 		return false;
 	}
+	if ( opt->start_address > 0 ) {
+		file_seek( infile, opt->start_address ) ;
+	}
 
 	/* outfile */
 	if ( opt->outfile_name == NULL ) {
@@ -325,6 +328,9 @@ void options_reset( options_t* opt )
 	opt->infile_name    = NULL;
 	opt->outfile_name   = NULL;
 
+	/*** input ***/
+	opt->start_address  = 0;
+
 	/*** container ***/
 	opt->data_length    = 0;
 	opt->data_fields    = 0;
@@ -390,6 +396,9 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 		if (ARG_FLAG("-?") || ARG_FLAG("-h") || ARG_FLAG("--help")) {
 			(void) help();
 			return false;
+		/* input */
+		} else if ( ARG_SPARAM("-s") || ARG_LPARAM("--start-address=") ) {
+			opt->start_address = strtoul( sub, NULL, 0 );
 		/* memory */
 		} else if ( ARG_SPARAM("-l") || ARG_LPARAM("--length=") ) {
 			if ( opt->data_length != 0 ) {

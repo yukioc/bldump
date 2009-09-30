@@ -156,6 +156,22 @@ static void tc_bldump_setup(void)
 		(void) memory_free( &memory );
 	}
 
+	/* start_address=1 */
+	{
+		opt.infile_name  = t_tmpname;
+		opt.outfile_name = NULL;
+		opt.start_address = 1;
+		is = bldump_setup( &memory, &infile, &outfile, &opt );
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_PTR_NOT_NULL( infile.ptr );
+		CU_ASSERT_EQUAL( infile.position, 1 );
+		CU_ASSERT_EQUAL( outfile.ptr, t_stdout  );
+		CU_ASSERT_PTR_NOT_NULL( memory.data );
+		(void) file_close( &infile );
+		(void) file_close( &outfile );
+		(void) memory_free( &memory );
+	}
+
 	opt.infile_name  = t_tmpname;
 	opt.outfile_name = NULL;
 

@@ -23,6 +23,9 @@ typedef struct {
 	char*        infile_name;  /*!< argument infile */
 	char*        outfile_name; /*!< argument outfile */
 
+	//input
+	size_t		start_address;
+
 	//container
 	int			data_length;
 	int			data_fields;

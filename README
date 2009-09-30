@@ -13,14 +13,17 @@ DESCRIPTION
 OPTIONS
 
   <infile>
-    dump file.
+    Dump file.
 
   <outfile>
-    output file name. if not specified, output stdout.
+    Output file name. if not specified, output stdout.
 
   -a, --show-address
-    displays data address preceded each line.
+    Display data address preceded each line.
     if not specified, doesn't display.
+
+  -s <num>, --start-address=<num>
+    Skip <num> bytes from the beggining of the inputs.
 
   -f <num>, --fields=<num>
     The number of data fields of displaying at a line(default:16).
@@ -29,10 +32,10 @@ OPTIONS
     The number of data bytes of displaying(default:1).
 
   -h -? --help
-    displays command line help message, and exit application.
+    Display command line help message, and exit application.
 
   --version
-    bldump version, build date.
+    Display bldump version, build date.
 
 EXAMPLES
 
@@ -58,21 +61,19 @@ HISTORY
 
   v.0.1
     * hexadecimal display
-    * "-h,-?,--help" display help message.
+    * '-h,-?,--help' display help message.
     * added test feature - splint, CUnit add gcov.
 
 ROADMAP
 
   v.0.x
-    * "-l,-f" set size of data and number of fields
-    * "-a" displays data address of inputs.
+    * '-l,-f' set size of data and number of fields
+    * '-a' displays data address of inputs.
+    * '-s' set skip size from the beggining of the inputs.
 
   v.1.0
     * decimal dump
     * display by CSV, TSV format
-    * set offset to start, size of dump
-    * set size of data and number of columns
     * search hex pattern
     * reordering input data
 
- v.x.x
