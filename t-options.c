@@ -325,6 +325,33 @@ static void tc_opt_start(void)
 	}
 }
 
+/*!
+ * @brief test -v, --verbose
+ */
+static void tc_opt_verbose(void)
+{
+	options_t opt;
+	bool is;
+
+	/* -v */
+	{
+		char* argv[] = { "bldump", "-v", "3" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, false );
+		CU_ASSERT_EQUAL( verbose_level, 3 );
+	}
+
+	/* --verboes */
+	{
+		char* argv[] = { "bldump", "--verbose=4", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( verbose_level, 4 );
+	}
+}
+
 CU_ErrorCode ts_opt_regist(void)
 {
 	CU_TestInfo ts_opt_cases[] = {
@@ -337,6 +364,7 @@ CU_ErrorCode ts_opt_regist(void)
 		{ "options_load( bldump -f|--fields infile )", tc_opt_fields },
 		{ "options_load( bldump -a|--show-address )", tc_opt_address },
 		{ "options_load( bldump -s|--start-address )", tc_opt_start },
+		{ "options_load( bldump -v|--verbose )", tc_opt_verbose },
 		CU_TEST_INFO_NULL
 	};
 

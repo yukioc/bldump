@@ -39,8 +39,11 @@ const static char *usage[] = {
 	"  -f <num>, --fields=<num>",
 	"    The number of data fields of displaying at a line(default:16).",
 	"",
-	"  -l num, --length=num",
+	"  -l <num>, --length=<num>",
 	"    The number of data bytes of displaying(default:1).",
+	"",
+	"  -v <num>, --verbose=<num>",
+	"    verbose mode(default:3).",
 	"",
 	"  -h -? --help",
 	"    displays command line help message, and exit application.",
@@ -57,7 +60,7 @@ const static char *usage[] = {
 #define DEBUG_ASSERT(c)
 #endif
 /* assert() is check always
- * ASSERT() is check in debug.
+ * DEBUG_ASSERT() is check in debug.
  */
 
 /*** macro ***/
@@ -411,6 +414,9 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 		/* output */
 		} else if ( ARG_FLAG("-a") || ARG_FLAG("--show-address") ) {
 			opt->show_address = true;
+		/* debug */
+		} else if ( ARG_SPARAM("-v") || ARG_LPARAM("--verbose=") ) {
+			verbose_level = (unsigned int)strtoul( sub, NULL, 0 ); 
 		/* error */
 		} else if ( argv[i][0] == '-' ) {
 			(void)verbose_printf( VERB_ERR, "Error: unsupported option - %s\n", argv[i] );
