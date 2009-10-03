@@ -20,8 +20,10 @@
 #include "bldump.h"
 
 /*** interface ***/
-#define VERSION		"version 0.1.x"
-#define DATE		"(" __DATE__ ")"
+#ifndef VERSION
+#define VERSION "0.x"
+#endif
+#define BUILD   __DATE__
 
 const static char *usage[] = {
 	"Usage: bldump [<options>] [<infile> [<outfile>]]",
@@ -96,7 +98,7 @@ int main( int argc, char* argv[] )
 	verbose_level = VERB_DEFAULT;
 
 	if ( argc == 2 && strcmp("--version", argv[1]) == 0  ) {
-		fprintf( STDOUT, "bldump %s %s\n", VERSION, DATE );
+		fprintf( (STDOUT)?STDOUT:stdout, "bldump version %s (%s)\n", VERSION, BUILD );
 		return 0;
 	}
 #ifdef CUNIT

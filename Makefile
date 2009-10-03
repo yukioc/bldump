@@ -6,6 +6,7 @@
 #### CONFIGURE
 APP_EXE		:= bldump
 APP_SRC		:= bldump.c verbose.c
+APP_VER		:= $(shell git describe)
 TEST_EXE	:= $(APP_EXE)-test
 TEST_SRC	:= $(wildcard t-*.c)
 TEST_LIB	:= cunit
@@ -23,7 +24,7 @@ VPATH	:= ${CUNIT_DIR}
 
 ##### COMMAND
 CC			=gcc
-CPPFLAGS	=-O3
+CPPFLAGS	=-O3 -DVERSION="\"${APP_VER}\""
 SC_INCDIR	=-I.
 
 ifdef COMSPEC
