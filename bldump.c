@@ -34,23 +34,33 @@ const static char *usage[] = {
 	"  <outfile>",
 	"    output file name. if not specified, output stdout.",
 	"",
-	"  -a, --show-address",
-	"    displays data address preceded each line.",
-	"    if not specified, doesn't display.",
-	"",
+	/* container */
 	"  -f <num>, --fields=<num>",
 	"    The number of data fields of displaying at a line(default:16).",
 	"",
 	"  -l <num>, --length=<num>",
 	"    The number of data bytes of displaying(default:1).",
 	"",
+	/* inputs */
+	"  -s <num>, --start-address=<num>",
+	"    Skip <num> bytes from the beggining of the inputs.",
+	"",
+	"  -i, --decimal",
+	"    Displays decimal.",
+	"",
+	/* output */
+	"  -a, --show-address",
+	"    Displays data address preceded each line.",
+	"    if not specified, doesn't display.",
 	"",
 	"  -d <str>, --delimitter=<str>",
 	"    The field delimitter character(default:' ').",
 	"",
+	/* debug */
 	"  -v <num>, --verbose=<num>",
 	"    verbose mode(default:3).",
 	"",
+	/* others */
 	"  -h -? --help",
 	"    displays command line help message, and exit application.",
 	"",
@@ -270,14 +280,16 @@ bool bldump_write( memory_t* memory, file_t* outfile, options_t* opt )
 	/*** output ***/
 	switch( opt->output_type )
 	{
-		case HEX:
+		case HEXADECIMAL:
+		default:
 			write_hex( memory, outfile, opt );
 			break;
 		case DECIMAL:
-		case UDECIMAL:
-		case BINARY:
-		default:
-			assert(0);
+			write_dec( memory, outfile, opt );
+			break;
+//		case UDECIMAL:
+//		case BINARY:
+//			assert(0);
 	}
 	return true ;
 }
@@ -310,7 +322,7 @@ void write_hex( memory_t* memory, file_t* outfile, options_t* opt )
 
 		/*** output data ***/
 		for ( j = 0; j < data_len; j++ ) {
-			fprintf( outfile->ptr, "%02x", (unsigned int) memory->data[i] );
+			fprintf( outfile->ptr, opt->output_format, (unsigned int) memory->data[i] );
 			++i;
 			if ( i >= memory->size ) {
 				break;
@@ -318,6 +330,50 @@ void write_hex( memory_t* memory, file_t* outfile, options_t* opt )
 		}
 	}
 
+	(void)fputs( opt->row_delimitter, outfile->ptr ); /* line separater */
+}
+
+/*!
+ * @brief print decimal.
+ * @param[in] memory read dump data.
+ * @param[out] file file pointer.
+ * @param[in] opt
+ */
+void write_dec( memory_t* memory, file_t* outfile, options_t* opt )
+{
+	size_t i;
+	int j;
+	int data_len = opt->data_length;
+	int64_t data;
+
+	assert( memory->size % opt->data_length == 0 );
+
+	//--- output address 
+	if ( opt->show_address == true ) {
+		fprintf( outfile->ptr, "%08lx: ", (unsigned long)memory->address );
+	}
+
+	for ( i = 0; i < memory->size; ) {
+		/*** column delimitter ***/
+		if ( opt->col_delimitter != NULL && i != 0 ) {
+			(void)fputs( opt->col_delimitter, outfile->ptr );
+		}
+
+		/*** output data ***/
+		data = 0;
+		for ( j = 0; j < data_len; j++ ) {
+			data = (data << 8) | memory->data[i];
+			++i;
+			if ( i >= memory->size ) {
+				break;
+			}
+		}
+		{
+			int s = ((int)sizeof(data) - data_len) * 8;
+			data = (data << s) >> s; //expanded zero
+		}
+		(void)fprintf( outfile->ptr, opt->output_format, (long long int)data );
+	}
 	(void)fputs( opt->row_delimitter, outfile->ptr ); /* line separater */
 }
 
@@ -345,7 +401,8 @@ void options_reset( options_t* opt )
 	opt->data_fields    = 0;
 
 	/*** outfile ***/
-	opt->output_type    = HEX;
+	opt->output_type    = HEXADECIMAL;
+	opt->output_format  = NULL;
 	opt->show_address   = false;
 	opt->col_delimitter  = NULL;
 	opt->row_delimitter  = NULL;
@@ -422,6 +479,9 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 			opt->show_address = true;
 		} else if ( ARG_SPARAM("-d") || ARG_LPARAM("--delimitter=") ) {
 			opt->col_delimitter = strclone( sub );
+		} else if ( ARG_FLAG("-i") || ARG_FLAG("--decimal") ) {
+			opt->output_type = DECIMAL;
+			opt->output_format = "%lld";
 		/* debug */
 		} else if ( ARG_SPARAM("-v") || ARG_LPARAM("--verbose=") ) {
 			verbose_level = (unsigned int)strtoul( sub, NULL, 0 ); 
@@ -462,6 +522,9 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 	}
 	if ( opt->data_fields == 0 ) {
 		opt->data_fields = 16;
+	}
+	if ( opt->output_format == NULL ) {
+		opt->output_format = "%02x";
 	}
 
 	return true;

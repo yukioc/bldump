@@ -87,6 +87,37 @@ static void tc_main_hex(void)
 }
 
 /*!
+ * @brief test "bldump -d , "
+ */
+static void tc_main_csv(void)
+{
+	/* bldump -d , */
+	int ret;
+	char* argv[] = { "bldump", "-i", "-d", ",", t_tmpname };
+	char* exp = "0123456789ABCDEFGHIJK";
+	char act[80];
+
+	fseek( t_stdout, 0, SEEK_SET );
+
+	/* make input data */
+	FILE* fp = fopen( t_tmpname, "wb" );
+	assert( fp != NULL );
+	fputs( exp, fp );
+	fclose( fp );
+
+	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	CU_ASSERT_EQUAL( ret, 0 );
+
+	fflush( t_stdout );
+	fseek( t_stdout, 0, SEEK_SET );
+	fgets(act, sizeof(act), t_stdout);
+	CU_ASSERT_NSTRING_EQUAL( act, "48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70", 47 );
+	fgets(act, sizeof(act), t_stdout);
+	CU_ASSERT_NSTRING_EQUAL( act, "71,72,73,74,75", 14 );
+}
+
+
+/*!
  * @brief test "bldump --version"
  */
 static void tc_main_ver(void)
@@ -111,6 +142,7 @@ CU_ErrorCode ts_main_regist(void)
 	CU_TestInfo ts_main_cases[] = {
 		{ "bldump", tc_main_help },
 		{ "bldump -a", tc_main_hex },
+		{ "bldump -i -d ,", tc_main_csv },
 		{ "bldump --version", tc_main_ver },
 		CU_TEST_INFO_NULL
 	};

@@ -379,6 +379,33 @@ static void tc_opt_delimitter(void)
 	}
 }
 
+/*!
+ * @brief test -i, --decimal
+ */
+static void tc_opt_dec(void)
+{
+	options_t opt;
+	bool is;
+
+	/* -i */
+	{
+		char* argv[] = { "bldump", "-i", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.output_type, DECIMAL );
+	}
+
+	/* --decimal */
+	{
+		char* argv[] = { "bldump", "--decimal", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.output_type, DECIMAL );
+	}
+}
+
 CU_ErrorCode ts_opt_regist(void)
 {
 	CU_TestInfo ts_opt_cases[] = {
@@ -393,6 +420,7 @@ CU_ErrorCode ts_opt_regist(void)
 		{ "options_load( bldump -s|--start-address )", tc_opt_start },
 		{ "options_load( bldump -v|--verbose )", tc_opt_verbose },
 		{ "options_load( bldump -d|--delimitter )", tc_opt_delimitter },
+		{ "options_load( bldump -i|--decimal )", tc_opt_dec },
 		CU_TEST_INFO_NULL
 	};
 

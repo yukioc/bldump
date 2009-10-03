@@ -20,21 +20,22 @@ typedef enum {
 } OUTPUT_TYPE;
 
 typedef struct {
-	char*        infile_name;  /*!< argument infile */
-	char*        outfile_name; /*!< argument outfile */
+	char*        infile_name;  /*!< <infile> */
+	char*        outfile_name; /*!< <outfile> */
 
-	//input
-	size_t		start_address;
+	/* input */
+	size_t		start_address; /*!< -s : start reading address(skip bytes). */
 
-	//container
-	int			data_length;
-	int			data_fields;
+	/* container */
+	int			data_fields;   /*!< -f : input data fields. */
+	int			data_length;   /*!< -l : input data size. */
 
-	//outfile
-	OUTPUT_TYPE output_type;   /*!< argument -d, -u, -b */
-	bool        show_address;  /*!< argument -a */
+	/* output */
+	bool        show_address;   /*!< -a : data address. */
 	char*       col_delimitter; /*!< -d : delimitter of outputting column. */
 	char*       row_delimitter; /*!< delimitter of outputting row. */
+	OUTPUT_TYPE output_type;    /*!< argument -d, -u, -b */
+	char*		output_format;  /*!< output format. */
 
 } options_t;
 

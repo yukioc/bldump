@@ -18,18 +18,27 @@ OPTIONS
   <outfile>
     Output file name. if not specified, output stdout.
 
-  -a, --show-address
-    Display data address preceded each line.
-    if not specified, doesn't display.
+  -f <num>, --fields=<num>
+    The number of data fields of displaying at a line(default:16).
+
+  -l <num>, --length=<num>
+    The number of data bytes of displaying(default:1).
 
   -s <num>, --start-address=<num>
     Skip <num> bytes from the beggining of the inputs.
 
-  -f <num>, --fields=<num>
-    The number of data fields of displaying at a line(default:16).
+  -i, --decimal
+    Displays decimal.
 
-  -l num, --length=num
-    The number of data bytes of displaying(default:1).
+  -a, --show-address
+    Display data address preceded each line.
+    if not specified, doesn't display.
+
+  -d <str>, --delimitter=<str>
+    The field delimitter character(default:' ').
+
+  -v <num>, --verbose=<num>
+    Verbose mode(default:3).
 
   -h -? --help
     Display command line help message, and exit application.
@@ -40,12 +49,20 @@ OPTIONS
 EXAMPLES
 
   bldump -a
-    hexadecimal dump with address. 
+    Display hexadecimal dump with address. 
 
     $ echo "0123456789ABCDEFGHIJK" > exp.txt
     $ ./bldump -a exp.txt 
     00000000: 30 31 32 33 34 35 36 37 38 39 41 42 43 44 45 46
     00000010: 47 48 49 4a 4b 0a
+
+  bldump -i -d , <infile>
+    Display csv text.
+
+    $ echo "0123456789ABCDEFGHIJK" > exp.txt
+    $ ./bldump -i -d , exp.txt 
+    48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70
+    71,72,73,74,75
 
 INSTALLATION
 
@@ -59,6 +76,13 @@ INSTALLATION
 
 HISTORY
 
+  v.0.2
+    * '-l,-f' set size of data and number of fields
+    * '-a' display data address of inputs.
+    * '-s' set skip size from the beggining of the inputs.
+    * '-d' set the field delimitter character.
+    * '-i' display decimal ints.
+
   v.0.1
     * hexadecimal display
     * '-h,-?,--help' display help message.
@@ -66,14 +90,10 @@ HISTORY
 
 ROADMAP
 
-  v.0.x
-    * '-l,-f' set size of data and number of fields
-    * '-a' displays data address of inputs.
-    * '-s' set skip size from the beggining of the inputs.
-
   v.1.0
-    * decimal dump
-    * display by CSV, TSV format
-    * search hex pattern
-    * reordering input data
+    * hex pattern searching
+    * input data reordering
+
+  v.x.x
+    * text file parsing
 
