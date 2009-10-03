@@ -45,10 +45,13 @@ const static char *usage[] = {
 	"  -s <num>, --start-address=<num>",
 	"    Skip <num> bytes from the beggining of the inputs.",
 	"",
+	/* output */
 	"  -i, --decimal",
 	"    Displays decimal.",
 	"",
-	/* output */
+	"  -b, --binary",
+	"    Outputs binary.",
+	"",
 	"  -a, --show-address",
 	"    Displays data address preceded each line.",
 	"    if not specified, doesn't display.",
@@ -288,8 +291,10 @@ bool bldump_write( memory_t* memory, file_t* outfile, options_t* opt )
 			write_dec( memory, outfile, opt );
 			break;
 //		case UDECIMAL:
-//		case BINARY:
 //			assert(0);
+		case BINARY:
+			file_write( outfile, memory );
+			break;
 	}
 	return true ;
 }
@@ -482,6 +487,8 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 		} else if ( ARG_FLAG("-i") || ARG_FLAG("--decimal") ) {
 			opt->output_type = DECIMAL;
 			opt->output_format = "%lld";
+		} else if ( ARG_FLAG("-b") || ARG_FLAG("--binary") ) {
+			opt->output_type = BINARY;
 		/* debug */
 		} else if ( ARG_SPARAM("-v") || ARG_LPARAM("--verbose=") ) {
 			verbose_level = (unsigned int)strtoul( sub, NULL, 0 ); 

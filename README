@@ -30,6 +30,9 @@ OPTIONS
   -i, --decimal
     Displays decimal.
 
+  -b, --binary
+    Outputs binary.
+
   -a, --show-address
     Display data address preceded each line.
     if not specified, doesn't display.
@@ -75,6 +78,9 @@ INSTALLATION
   and move 'bldump' to your directory manually.
 
 HISTORY
+
+  v.0.x
+    * '-b' output binary.
 
   v.0.2
     * '-l,-f' set size of data and number of fields

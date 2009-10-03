@@ -336,7 +336,6 @@ static void tc_bldump_hexadecimal(void)
 		CU_ASSERT_EQUAL( reads, 46 );
 		CU_ASSERT_NSTRING_EQUAL( buf, "aaaa5555: 3031323334-3536373839-4142434445-46\n", 46 );
 	}
-
 }
 
 /*!
@@ -406,8 +405,49 @@ static void tc_bldump_decimal(void)
 		CU_ASSERT_NSTRING_EQUAL( buf, "72623859790382856 -9114578090645354616\n", 39 );
 		//printf( "reads=%d buf=%s", reads, buf );
 	}
-
 }
+
+
+/*!
+ * @brief test of BINARY format of bldump_write().
+ */
+static void tc_bldump_binary(void)
+{
+	int i;
+	file_t outfile;
+	memory_t memory;
+	options_t opt;
+	char data[3] = { 0x01, 0x02, 0x03 } ;
+	file_reset( &outfile );
+	memory_init( &memory );
+	options_reset( &opt );
+
+	(void) memory_allocate( &memory, 7 );
+	memset( memory.data, 0xcc, memory.length );	
+	for ( i=0; i<3; i++ ) memory.data[i] = data[i];
+	memory.size = 3;
+
+	/* 0x01, 0x02, 0x03 */
+	{
+		FILE* in;
+		char buf[100];
+		size_t reads;
+		opt.output_type    = BINARY;
+
+		(void) file_open( &outfile, t_tmpname, "wb" );
+		(void) bldump_write( &memory, &outfile, &opt );
+		(void) file_close( &outfile );
+
+		in = fopen( t_tmpname, "rb" );
+		reads = fread( buf, 1, 100, in );
+		CU_ASSERT_EQUAL( reads, 3 );
+		CU_ASSERT_EQUAL( buf[0], 0x01 );
+		CU_ASSERT_EQUAL( buf[1], 0x02 );
+		CU_ASSERT_EQUAL( buf[2], 0x03 );
+		//printf( "reads=%d buf=%s", reads, buf );
+	}
+}
+
 
 CU_ErrorCode ts_bldump_regist(void)
 {
@@ -418,6 +458,7 @@ CU_ErrorCode ts_bldump_regist(void)
 		{ "bldump_read()"             , tc_bldump_read }  , 
 		{ "bldump_write(HEXADECIMAL)" , tc_bldump_hexadecimal }   , 
 		{ "bldump_write(DECIMAL)"     , tc_bldump_decimal }   , 
+		{ "bldump_write(BINARY)"      , tc_bldump_binary }   , 
 		CU_TEST_INFO_NULL
 	};
 

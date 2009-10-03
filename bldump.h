@@ -68,6 +68,7 @@ bool bldump_setup( memory_t* memory, file_t* infile, file_t* outfile, options_t*
 bool bldump_read( memory_t* memory, file_t* infile, options_t* opt );
 bool bldump_write( memory_t* memory, file_t* outfile, options_t* opt );
 void write_hex( memory_t* memory, file_t* file, options_t* opt );
+void write_dec( memory_t* memory, file_t* outfile, options_t* opt );
 
 /*** options ***/
 void options_reset( /*@out@*/ options_t* opt );

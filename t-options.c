@@ -406,6 +406,33 @@ static void tc_opt_dec(void)
 	}
 }
 
+/*!
+ * @brief test -b, --binary
+ */
+static void tc_opt_bin(void)
+{
+	options_t opt;
+	bool is;
+
+	/* -b */
+	{
+		char* argv[] = { "bldump", "-b", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.output_type, BINARY );
+	}
+
+	/* --binary */
+	{
+		char* argv[] = { "bldump", "--binary", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.output_type, BINARY );
+	}
+}
+
 CU_ErrorCode ts_opt_regist(void)
 {
 	CU_TestInfo ts_opt_cases[] = {
@@ -421,6 +448,7 @@ CU_ErrorCode ts_opt_regist(void)
 		{ "options_load( bldump -v|--verbose )", tc_opt_verbose },
 		{ "options_load( bldump -d|--delimitter )", tc_opt_delimitter },
 		{ "options_load( bldump -i|--decimal )", tc_opt_dec },
+		{ "options_load( bldump -b|--binary)", tc_opt_bin },
 		CU_TEST_INFO_NULL
 	};
 
