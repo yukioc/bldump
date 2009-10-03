@@ -56,62 +56,62 @@ static void tc_options_clear(void)
 	/* normal */
 	opt.infile_name   = (char*)malloc(1);
 	opt.outfile_name  = (char*)malloc(1);
-	opt.col_separator = (char*)malloc(1);
-	opt.row_separator = (char*)malloc(1);
+	opt.col_delimitter = (char*)malloc(1);
+	opt.row_delimitter = (char*)malloc(1);
 	is = options_clear( &opt );
 	CU_ASSERT_EQUAL( is, true );
 	CU_ASSERT_PTR_NULL( opt.infile_name );
 	CU_ASSERT_PTR_NULL( opt.outfile_name );
-	CU_ASSERT_PTR_NULL( opt.col_separator );
-	CU_ASSERT_PTR_NULL( opt.row_separator );
+	CU_ASSERT_PTR_NULL( opt.col_delimitter );
+	CU_ASSERT_PTR_NULL( opt.row_delimitter );
 
 	/* error */
 	opt.infile_name   = NULL;
 	opt.outfile_name  = (char*)malloc(1);
-	opt.col_separator = (char*)malloc(1);
-	opt.row_separator = (char*)malloc(1);
+	opt.col_delimitter = (char*)malloc(1);
+	opt.row_delimitter = (char*)malloc(1);
 	is = options_clear( &opt );
 	CU_ASSERT_EQUAL( is, false );
 	CU_ASSERT_PTR_NULL( opt.infile_name );
 	CU_ASSERT_PTR_NULL( opt.outfile_name );
-	CU_ASSERT_PTR_NULL( opt.col_separator );
-	CU_ASSERT_PTR_NULL( opt.row_separator );
+	CU_ASSERT_PTR_NULL( opt.col_delimitter );
+	CU_ASSERT_PTR_NULL( opt.row_delimitter );
 
 	/* error */
 	opt.infile_name   = (char*)malloc(1);
 	opt.outfile_name  = NULL;
-	opt.col_separator = (char*)malloc(1);
-	opt.row_separator = (char*)malloc(1);
+	opt.col_delimitter = (char*)malloc(1);
+	opt.row_delimitter = (char*)malloc(1);
 	is = options_clear( &opt );
 	CU_ASSERT_EQUAL( is, false );
 	CU_ASSERT_PTR_NULL( opt.infile_name );
 	CU_ASSERT_PTR_NULL( opt.outfile_name );
-	CU_ASSERT_PTR_NULL( opt.col_separator );
-	CU_ASSERT_PTR_NULL( opt.row_separator );
+	CU_ASSERT_PTR_NULL( opt.col_delimitter );
+	CU_ASSERT_PTR_NULL( opt.row_delimitter );
 
 	/* error */
 	opt.infile_name   = (char*)malloc(1);
 	opt.outfile_name  = (char*)malloc(1);
-	opt.col_separator = NULL;
-	opt.row_separator = (char*)malloc(1);
+	opt.col_delimitter = NULL;
+	opt.row_delimitter = (char*)malloc(1);
 	is = options_clear( &opt );
 	CU_ASSERT_EQUAL( is, false );
 	CU_ASSERT_PTR_NULL( opt.infile_name );
 	CU_ASSERT_PTR_NULL( opt.outfile_name );
-	CU_ASSERT_PTR_NULL( opt.col_separator );
-	CU_ASSERT_PTR_NULL( opt.row_separator );
+	CU_ASSERT_PTR_NULL( opt.col_delimitter );
+	CU_ASSERT_PTR_NULL( opt.row_delimitter );
 
 	/* error */
 	opt.infile_name   = (char*)malloc(1);
 	opt.outfile_name  = (char*)malloc(1);
-	opt.col_separator = (char*)malloc(1);
-	opt.row_separator = NULL;
+	opt.col_delimitter = (char*)malloc(1);
+	opt.row_delimitter = NULL;
 	is = options_clear( &opt );
 	CU_ASSERT_EQUAL( is, false );
 	CU_ASSERT_PTR_NULL( opt.infile_name );
 	CU_ASSERT_PTR_NULL( opt.outfile_name );
-	CU_ASSERT_PTR_NULL( opt.col_separator );
-	CU_ASSERT_PTR_NULL( opt.row_separator );
+	CU_ASSERT_PTR_NULL( opt.col_delimitter );
+	CU_ASSERT_PTR_NULL( opt.row_delimitter );
 }
 
 /*!
@@ -352,6 +352,33 @@ static void tc_opt_verbose(void)
 	}
 }
 
+/*!
+ * @brief test -d, --delimitter
+ */
+static void tc_opt_delimitter(void)
+{
+	options_t opt;
+	bool is;
+
+	/* -d */
+	{
+		char* argv[] = { "bldump", "-d", ",", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_STRING_EQUAL( opt.col_delimitter, "," );
+	}
+
+	/* --delimitter */
+	{
+		char* argv[] = { "bldump", "--delimitter=\t", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_STRING_EQUAL( opt.col_delimitter, "\t" );
+	}
+}
+
 CU_ErrorCode ts_opt_regist(void)
 {
 	CU_TestInfo ts_opt_cases[] = {
@@ -365,6 +392,7 @@ CU_ErrorCode ts_opt_regist(void)
 		{ "options_load( bldump -a|--show-address )", tc_opt_address },
 		{ "options_load( bldump -s|--start-address )", tc_opt_start },
 		{ "options_load( bldump -v|--verbose )", tc_opt_verbose },
+		{ "options_load( bldump -d|--delimitter )", tc_opt_delimitter },
 		CU_TEST_INFO_NULL
 	};
 

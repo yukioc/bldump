@@ -44,6 +44,10 @@ const static char *usage[] = {
 	"  -l <num>, --length=<num>",
 	"    The number of data bytes of displaying(default:1).",
 	"",
+	"",
+	"  -d <str>, --delimitter=<str>",
+	"    The field delimitter character(default:' ').",
+	"",
 	"  -v <num>, --verbose=<num>",
 	"    verbose mode(default:3).",
 	"",
@@ -290,8 +294,8 @@ void write_hex( memory_t* memory, file_t* outfile, options_t* opt )
 	int j;
 	int data_len = opt->data_length;
 
-	DEBUG_ASSERT( opt->col_separator != NULL );
-	DEBUG_ASSERT( opt->row_separator != NULL );
+	DEBUG_ASSERT( opt->col_delimitter != NULL );
+	DEBUG_ASSERT( opt->row_delimitter != NULL );
 
 	/*** output address  ***/
 	if ( opt->show_address == true ) {
@@ -299,9 +303,9 @@ void write_hex( memory_t* memory, file_t* outfile, options_t* opt )
 	}
 
 	for ( i = 0; i < memory->size; ) {
-		/*** column separator ***/
-		if ( opt->col_separator != NULL && i != 0 ) {
-			(void)fputs( opt->col_separator, outfile->ptr );
+		/*** column delimitter ***/
+		if ( opt->col_delimitter != NULL && i != 0 ) {
+			(void)fputs( opt->col_delimitter, outfile->ptr );
 		}
 
 		/*** output data ***/
@@ -314,7 +318,7 @@ void write_hex( memory_t* memory, file_t* outfile, options_t* opt )
 		}
 	}
 
-	(void)fputs( opt->row_separator, outfile->ptr ); /* line separater */
+	(void)fputs( opt->row_delimitter, outfile->ptr ); /* line separater */
 }
 
 //##############################################################################
@@ -343,8 +347,8 @@ void options_reset( options_t* opt )
 	/*** outfile ***/
 	opt->output_type    = HEX;
 	opt->show_address   = false;
-	opt->col_separator  = NULL;
-	opt->row_separator  = NULL;
+	opt->col_delimitter  = NULL;
+	opt->row_delimitter  = NULL;
 }
 
 /*! 
@@ -364,13 +368,13 @@ bool options_clear( options_t* opt )
 	} else {
 		retval = false;
 	}
-	if ( strfree( opt->col_separator ) == true ) {
-		opt->col_separator = NULL;
+	if ( strfree( opt->col_delimitter ) == true ) {
+		opt->col_delimitter = NULL;
 	} else {
 		retval = false;
 	}
-	if ( strfree( opt->row_separator ) == true ) {
-		opt->row_separator = NULL;
+	if ( strfree( opt->row_delimitter ) == true ) {
+		opt->row_delimitter = NULL;
 	} else {
 		retval = false;
 	}
@@ -416,6 +420,8 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 		/* output */
 		} else if ( ARG_FLAG("-a") || ARG_FLAG("--show-address") ) {
 			opt->show_address = true;
+		} else if ( ARG_SPARAM("-d") || ARG_LPARAM("--delimitter=") ) {
+			opt->col_delimitter = strclone( sub );
 		/* debug */
 		} else if ( ARG_SPARAM("-v") || ARG_LPARAM("--verbose=") ) {
 			verbose_level = (unsigned int)strtoul( sub, NULL, 0 ); 
@@ -445,11 +451,11 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 		opt->outfile_name = NULL;
 	}
 
-	if ( opt->col_separator == NULL ) {
-		opt->col_separator  = strclone( " " );
+	if ( opt->col_delimitter == NULL ) {
+		opt->col_delimitter  = strclone( " " );
 	}
-	if ( opt->row_separator == NULL ) {
-		opt->row_separator  = strclone( "\n" );
+	if ( opt->row_delimitter == NULL ) {
+		opt->row_delimitter  = strclone( "\n" );
 	}
 	if ( opt->data_length == 0 ) {
 		opt->data_length = 1;

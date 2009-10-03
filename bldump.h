@@ -16,7 +16,7 @@
  ******************/
 /*** enum ***/
 typedef enum {
-	HEX, DECIMAL, UDECIMAL, BINARY
+	HEXADECIMAL = 0, DECIMAL, UDECIMAL, BINARY
 } OUTPUT_TYPE;
 
 typedef struct {
@@ -33,8 +33,8 @@ typedef struct {
 	//outfile
 	OUTPUT_TYPE output_type;   /*!< argument -d, -u, -b */
 	bool        show_address;  /*!< argument -a */
-	char*       col_separator; /*!< separator of outputting column */
-	char*       row_separator; /*!< separator of outputting row */
+	char*       col_delimitter; /*!< -d : delimitter of outputting column. */
+	char*       row_delimitter; /*!< delimitter of outputting row. */
 
 } options_t;
 

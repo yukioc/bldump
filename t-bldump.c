@@ -301,8 +301,8 @@ static void tc_bldump_hex(void)
 		opt.output_type   = HEX;
 		opt.show_address  = false;
 		opt.data_length   = 1;
-		opt.col_separator = ",";
-		opt.row_separator = "\n";
+		opt.col_delimitter = ",";
+		opt.row_delimitter = "\n";
 
 		(void) file_open( &outfile, t_tmpname, "wb" );
 		(void) bldump_write( &memory, &outfile, &opt );
@@ -322,8 +322,8 @@ static void tc_bldump_hex(void)
 		opt.output_type   = HEX;
 		opt.show_address  = true;
 		opt.data_length   = 5;
-		opt.col_separator = "-";
-		opt.row_separator = "\n";
+		opt.col_delimitter = "-";
+		opt.row_delimitter = "\n";
 
 		(void) file_open( &outfile, t_tmpname, "wb" );
 		(void) bldump_write( &memory, &outfile, &opt );
