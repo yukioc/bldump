@@ -49,6 +49,9 @@ const static char *usage[] = {
 	"  -i, --decimal",
 	"    Displays decimal.",
 	"",
+	"  -u, --unsigned",
+	"    Displays unsigned decimal.",
+	"",
 	"  -b, --binary",
 	"    Outputs binary.",
 	"",
@@ -287,11 +290,10 @@ bool bldump_write( memory_t* memory, file_t* outfile, options_t* opt )
 		default:
 			write_hex( memory, outfile, opt );
 			break;
+		case UDECIMAL:
 		case DECIMAL:
 			write_dec( memory, outfile, opt );
 			break;
-//		case UDECIMAL:
-//			assert(0);
 		case BINARY:
 			file_write( outfile, memory );
 			break;
@@ -373,7 +375,7 @@ void write_dec( memory_t* memory, file_t* outfile, options_t* opt )
 				break;
 			}
 		}
-		{
+		if ( opt->output_type == DECIMAL ) {
 			int s = ((int)sizeof(data) - data_len) * 8;
 			data = (data << s) >> s; //expanded zero
 		}
@@ -487,6 +489,9 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 		} else if ( ARG_FLAG("-i") || ARG_FLAG("--decimal") ) {
 			opt->output_type = DECIMAL;
 			opt->output_format = "%lld";
+		} else if ( ARG_FLAG("-u") || ARG_FLAG("--unsigned") ) {
+			opt->output_type = UDECIMAL;
+			opt->output_format = "%llu";
 		} else if ( ARG_FLAG("-b") || ARG_FLAG("--binary") ) {
 			opt->output_type = BINARY;
 		/* debug */

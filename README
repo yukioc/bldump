@@ -30,6 +30,9 @@ OPTIONS
   -i, --decimal
     Displays decimal.
 
+  -u, --unsigned",
+    Displays unsigned decimal.
+
   -b, --binary
     Outputs binary.
 
