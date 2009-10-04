@@ -326,6 +326,33 @@ static void tc_opt_start(void)
 }
 
 /*!
+ * @brief test -e, --end-address
+ */
+static void tc_opt_end(void)
+{
+	options_t opt;
+	bool is;
+
+	/* -e */
+	{
+		char* argv[] = { "bldump", "-e", "1", "infile" };
+		options_reset( &opt );
+		CU_ASSERT_EQUAL( opt.end_address, 0 );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.end_address, 1 );
+	}
+
+	/* --end_address */
+	{
+		char* argv[] = { "bldump", "--end-address=2", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.end_address, 2 );
+	}
+}
+/*!
  * @brief test -v, --verbose
  */
 static void tc_opt_verbose(void)
@@ -479,6 +506,7 @@ CU_ErrorCode ts_opt_regist(void)
 		{ "options_load( bldump -i|--decimal )", tc_opt_dec },
 		{ "options_load( bldump -u|--unsigned)", tc_opt_udec },
 		{ "options_load( bldump -b|--binary)", tc_opt_bin },
+		{ "options_load( bldump -e|--end-address)", tc_opt_end },
 		CU_TEST_INFO_NULL
 	};
 

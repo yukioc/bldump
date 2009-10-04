@@ -27,6 +27,9 @@ OPTIONS
   -s <num>, --start-address=<num>
     Skip <num> bytes from the beggining of the inputs.
 
+  -e <num>, --end-address=<num>
+    Stop reading data reached to the <num> address.
+
   -i, --decimal
     Displays decimal.
 

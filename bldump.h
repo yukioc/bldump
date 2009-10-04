@@ -25,10 +25,11 @@ typedef struct {
 
 	/* input */
 	size_t		start_address; /*!< -s : start reading address(skip bytes). */
+	size_t		end_address;   /*!< -l : end reading address */
 
 	/* container */
 	int			data_fields;   /*!< -f : input data fields. */
-	int			data_length;   /*!< -l : input data size. */
+	int			data_length;   /*!< -l : input data length. */
 
 	/* output */
 	bool        show_address;   /*!< -a : data address. */

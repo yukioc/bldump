@@ -45,6 +45,9 @@ const static char *usage[] = {
 	"  -s <num>, --start-address=<num>",
 	"    Skip <num> bytes from the beggining of the inputs.",
 	"",
+	"  -e <num>, --end-address=<num>",
+	"    Stop reading data reached to the <num> address.",
+	"",
 	/* output */
 	"  -i, --decimal",
 	"    Displays decimal.",
@@ -169,7 +172,6 @@ int main( int argc, char* argv[] )
 		while( feof(infile.ptr)==0 ) {
 			is_ok = bldump_read( &memory, &infile, &opt );
 			if ( is_ok == false || memory.size == 0 ) {
-				assert( feof(infile.ptr)!=0 );
 				break;
 			}
 
@@ -257,14 +259,26 @@ bool bldump_read( memory_t* memory, file_t* infile, /*@unused@*/ options_t* opt 
 {
 	bool is;
 	size_t nmemb;
+	size_t limit;
 
 	DEBUG_ASSERT( memory->length > 0 );
 
 	memory_clear( memory );
 	nmemb = memory->length - memory->size;
 
+	if ( opt->end_address != 0 ) {
+		if ( infile->position >= opt->end_address ) {
+			return false;
+		}
+		limit = opt->end_address - infile->position;
+		if ( nmemb > limit ) {
+			nmemb = limit;
+			(void)verbose_printf( VERB_WARNING, "Warning: cut off the reading size less than end-address.\n" );
+		}
+	}
+
 	is = file_read( infile, memory, nmemb );
-   
+
 	if ( is == false ) {
 		(void)verbose_printf( VERB_DEBUG, "bldump: file read failure.\n" );
 	} else {
@@ -353,8 +367,6 @@ void write_dec( memory_t* memory, file_t* outfile, options_t* opt )
 	int data_len = opt->data_length;
 	int64_t data;
 
-	assert( memory->size % opt->data_length == 0 );
-
 	//--- output address 
 	if ( opt->show_address == true ) {
 		fprintf( outfile->ptr, "%08lx: ", (unsigned long)memory->address );
@@ -402,6 +414,7 @@ void options_reset( options_t* opt )
 
 	/*** input ***/
 	opt->start_address  = 0;
+	opt->end_address    = 0;
 
 	/*** container ***/
 	opt->data_length    = 0;
@@ -472,6 +485,8 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 		/* input */
 		} else if ( ARG_SPARAM("-s") || ARG_LPARAM("--start-address=") ) {
 			opt->start_address = strtoul( sub, NULL, 0 );
+		} else if ( ARG_SPARAM("-e") || ARG_LPARAM("--end-address=") ) {
+			opt->end_address = strtoul( sub, NULL, 0 );
 		/* memory */
 		} else if ( ARG_SPARAM("-l") || ARG_LPARAM("--length=") ) {
 			if ( opt->data_length != 0 ) {

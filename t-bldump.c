@@ -239,13 +239,16 @@ static void tc_bldump_read(void)
 		(void)file_close( &infile );
 	}
 
-	/* normal text */
+	/* make test file */
 	{
 		FILE* in = fopen( t_tmpname, "wt" );
 		assert( in != NULL );
 		fputs( "The quick brown fox jumps over the lazy dog", in );
 		fclose( in );
+	}
 
+	/* normal text */
+	{
 		(void)file_open( &infile, t_tmpname, "rt" );
 
 		/* 1 */
@@ -267,6 +270,24 @@ static void tc_bldump_read(void)
 		CU_ASSERT_EQUAL( is,             false );
 		CU_ASSERT_EQUAL( memory.size,    0 );
 		CU_ASSERT_EQUAL( memory.address, 0 );
+
+		(void)file_close( &infile );
+	}
+
+	/* end_address */
+	{
+		(void)file_open( &infile, t_tmpname, "rt" );
+
+		opt.end_address = 34;
+
+		is = bldump_read( &memory, &infile, &opt );
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( memory.size, 30 );
+
+		is = bldump_read( &memory, &infile, &opt );
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( memory.size, 4 );
+		CU_ASSERT_NSTRING_EQUAL( memory.data, " the", 4 );
 
 		(void)file_close( &infile );
 	}
