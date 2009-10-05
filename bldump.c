@@ -827,7 +827,7 @@ bool file_read( file_t* file, memory_t* memory, size_t nmemb )
 	const size_t size  = 1;
 	size_t       reads = 0;
 	size_t       pos   = 0;
-	bool         is;
+	bool         is    = false;
 
 	assert( nmemb <= memory->length - memory->size ); /* nmemb must be set to 'memory' memory area. */
 
@@ -844,8 +844,6 @@ bool file_read( file_t* file, memory_t* memory, size_t nmemb )
 		if ( reads == 0 ) {
 			if ( feof(file->ptr) == 1 ) {
 				is = true;
-			} else {
-				is = false;
 			}
 		} else {
 			if ( memory->size == 0 ) {

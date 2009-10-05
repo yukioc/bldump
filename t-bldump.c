@@ -289,8 +289,13 @@ static void tc_bldump_read(void)
 		CU_ASSERT_EQUAL( memory.size, 4 );
 		CU_ASSERT_NSTRING_EQUAL( memory.data, " the", 4 );
 
+		is = bldump_read( &memory, &infile, &opt );
+		CU_ASSERT_EQUAL( is, false );
+		CU_ASSERT_EQUAL( memory.size, 0 );
+
 		(void)file_close( &infile );
 	}
+
 
 	remove( t_tmpname );
 	memory_free( &memory );
@@ -404,14 +409,16 @@ static void tc_bldump_decimal(void)
 		//printf( "reads=%d buf=%s\n", reads, buf );
 	}
 
-	/* 72623859790382856 -9114578090645354616 */
+	/* aaaa5555: 72623859790382856
+	 * 00000008: -9114578090645354616
+	 */
 	{
 		FILE* in;
 		char buf[100];
 		size_t reads;
 		opt.output_type    = DECIMAL;
 		opt.output_format  = "%lld";
-		opt.show_address   = false;
+		opt.show_address   = true;
 		opt.data_length    = 8;
 		opt.col_delimitter = " ";
 		opt.row_delimitter = "\n";
@@ -422,8 +429,8 @@ static void tc_bldump_decimal(void)
 
 		in = fopen( t_tmpname, "rb" );
 		reads = fread( buf, 1, 100, in );
-		CU_ASSERT_EQUAL( reads, 39 );
-		CU_ASSERT_NSTRING_EQUAL( buf, "72623859790382856 -9114578090645354616\n", 39 );
+		CU_ASSERT_EQUAL( reads, 49 );
+		CU_ASSERT_NSTRING_EQUAL( buf, "aaaa5555: 72623859790382856 -9114578090645354616\n", 49 );
 		//printf( "reads=%d buf=%s\n", reads, buf );
 	}
 }
