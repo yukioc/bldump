@@ -24,6 +24,10 @@ OPTIONS
   -l <num>, --length=<num>
     The number of data bytes of displaying(default:1).
 
+  -r <order>, --reorder=<order>
+    Change byte-order of the input data.
+    <order> consists of 0-7.
+
   -s <num>, --start-address=<num>
     Skip <num> bytes from the beggining of the inputs.
 
@@ -57,10 +61,10 @@ OPTIONS
 
 EXAMPLES
 
-  bldump -a
+  bldump -a <infile>
     Display hexadecimal dump with address. 
 
-    $ echo "0123456789ABCDEFGHIJK" > exp.txt
+    $ echo -n "0123456789ABCDEFGHIJK" > exp.txt
     $ ./bldump -a exp.txt 
     00000000: 30 31 32 33 34 35 36 37 38 39 41 42 43 44 45 46
     00000010: 47 48 49 4a 4b 0a
@@ -68,10 +72,17 @@ EXAMPLES
   bldump -i -d , <infile>
     Display csv text.
 
-    $ echo "0123456789ABCDEFGHIJK" > exp.txt
+    $ echo -n "0123456789ABCDEFGHIJK" > exp.txt
     $ ./bldump -i -d , exp.txt 
     48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70
     71,72,73,74,75
+
+  bldump -r3210 <infile>
+    Change little endian to big endian.
+
+    $ echo -n '01234567' > t-bldump.tmp 
+    $ ./bldump -r 3210 t-bldump.tmp 
+    33323130 37363534
 
 INSTALLATION
 
@@ -87,6 +98,7 @@ HISTORY
 
   v.0.x
     * '-b' output binary.
+    * '-r' change byte-order of the input data.
 
   v.0.2
     * '-l,-f' set size of data and number of fields
@@ -104,7 +116,6 @@ ROADMAP
 
   v.1.0
     * hex pattern searching
-    * input data reordering
 
   v.x.x
     * text file parsing

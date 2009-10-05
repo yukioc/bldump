@@ -87,6 +87,35 @@ static void tc_main_hex(void)
 }
 
 /*!
+ * @brief test "bldump -r 3210"
+ */
+static void tc_main_reorder(void)
+{
+	int ret;
+	char* argv[] = { "bldump", "-f", "1", "-r" , "3210", t_tmpname };
+	char* exp = "01234567";
+	char act[80];
+
+	fseek( t_stdout, 0, SEEK_SET );
+
+	/* make input data */
+	FILE* fp = fopen( t_tmpname, "wb" );
+	assert( fp != NULL );
+	fputs( exp, fp );
+	fclose( fp );
+
+	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	CU_ASSERT_EQUAL( ret, 0 );
+
+	fflush( t_stdout );
+	fseek( t_stdout, 0, SEEK_SET );
+	fgets(act, sizeof(act), t_stdout);
+	CU_ASSERT_NSTRING_EQUAL( act, "33323130", 8 );
+	fgets(act, sizeof(act), t_stdout);
+	CU_ASSERT_NSTRING_EQUAL( act, "37363534", 8 );
+}
+
+/*!
  * @brief test "bldump -d , "
  */
 static void tc_main_csv(void)
@@ -143,6 +172,7 @@ CU_ErrorCode ts_main_regist(void)
 		{ "bldump", tc_main_help },
 		{ "bldump -a", tc_main_hex },
 		{ "bldump -i -d ,", tc_main_csv },
+		{ "bldump -r 3210", tc_main_reorder },
 		{ "bldump --version", tc_main_ver },
 		CU_TEST_INFO_NULL
 	};

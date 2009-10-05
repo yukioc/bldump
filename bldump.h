@@ -30,6 +30,7 @@ typedef struct {
 	/* container */
 	int			data_fields;   /*!< -f : input data fields. */
 	int			data_length;   /*!< -l : input data length. */
+	int			data_order[8]; /*!< -r : byte order of input data */
 
 	/* output */
 	bool        show_address;   /*!< -a : data address. */

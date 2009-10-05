@@ -489,6 +489,64 @@ static void tc_opt_bin(void)
 	}
 }
 
+/*!
+ * @brief test -r, --reorder
+ */
+static void tc_opt_reorder(void)
+{
+	options_t opt;
+	bool is;
+
+	/* -r */
+	{
+		char* argv[] = { "bldump", "-r", "10", "infile" };
+		options_reset( &opt );
+		CU_ASSERT_EQUAL( opt.data_order[0], -1 );
+
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.data_length, 2 );
+		CU_ASSERT_EQUAL( opt.data_order[0], 1 );
+		CU_ASSERT_EQUAL( opt.data_order[1], 0 );
+	}
+
+	/* --reoder */
+	{
+		char* argv[] = { "bldump", "--reorder=012", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.data_length, 3 );
+		CU_ASSERT_EQUAL( opt.data_order[0], 0 );
+		CU_ASSERT_EQUAL( opt.data_order[1], 1 );
+		CU_ASSERT_EQUAL( opt.data_order[2], 2 );
+	}
+
+	/* -r 0 -r 0 (error) */
+	{
+		char* argv[] = { "bldump", "-r", "10", "-r", "10", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, false );
+	}
+
+	/* -r 012345678 (error) */
+	{
+		char* argv[] = { "bldump", "-r", "012345678", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, false );
+	}
+
+	/* -r 31 (error) */
+	{
+		char* argv[] = { "bldump", "-r", "31", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, false );
+	}
+}
+
 CU_ErrorCode ts_opt_regist(void)
 {
 	CU_TestInfo ts_opt_cases[] = {
@@ -507,6 +565,7 @@ CU_ErrorCode ts_opt_regist(void)
 		{ "options_load( bldump -u|--unsigned)", tc_opt_udec },
 		{ "options_load( bldump -b|--binary)", tc_opt_bin },
 		{ "options_load( bldump -e|--end-address)", tc_opt_end },
+		{ "options_load( bldump -r|--reorder)", tc_opt_reorder },
 		CU_TEST_INFO_NULL
 	};
 

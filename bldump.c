@@ -41,6 +41,10 @@ const static char *usage[] = {
 	"  -l <num>, --length=<num>",
 	"    The number of data bytes of displaying(default:1).",
 	"",
+	"  -r <order>, --reorder=<order>",
+	"    Change byte-order of the input data.",
+	"    <order> consists of 0-7.",
+	"",
 	/* inputs */
 	"  -s <num>, --start-address=<num>",
 	"    Skip <num> bytes from the beggining of the inputs.",
@@ -279,10 +283,36 @@ bool bldump_read( memory_t* memory, file_t* infile, /*@unused@*/ options_t* opt 
 
 	is = file_read( infile, memory, nmemb );
 
-	if ( is == false ) {
+	if ( is == false || memory->size <= 0 ) {
 		(void)verbose_printf( VERB_DEBUG, "bldump: file read failure.\n" );
 	} else {
-		DEBUG_ASSERT( memory->size > 0 ); /* success, but no data. */
+		/* reordering */
+		if ( opt->data_order[0] != -1 ) {
+			size_t i;
+			int j, k;
+			int idx = 0;
+			for ( i=0; i<memory->size; i+=opt->data_length ) {
+				uint64_t data = 0;
+				for ( j=0, k=(opt->data_length-1)*8;
+					j<opt->data_length; j++, k-=8 ) {
+					size_t loc=i+opt->data_order[j];
+					if ( loc < memory->size ) {
+						data = data | (((uint64_t)memory->data[loc]) << k);
+					}
+				}
+
+				for ( j=0, k=(opt->data_length-1)*8;
+					(j<opt->data_length) && (i+j) < memory->length;
+					j++, k-=8 ) {
+					idx = i+j;
+					memory->data[i+j] = (data_t) (data >> k);
+				}
+			}
+			if ( idx >= memory->size ) {
+				assert( idx <= memory->length );
+				memory->size = idx;
+			}
+		}
 	}
 	return is;
 }
@@ -419,6 +449,7 @@ void options_reset( options_t* opt )
 	/*** container ***/
 	opt->data_length    = 0;
 	opt->data_fields    = 0;
+	opt->data_order[0]  = -1;
 
 	/*** outfile ***/
 	opt->output_type    = HEXADECIMAL;
@@ -472,6 +503,8 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 	int i;
 	size_t a; /* for macro */
 	char *sub;
+	uint64_t order = 0;
+	uint64_t order_length = 0;
 
 #define strlcmp(l,r) (strncmp(l,r,strlen(l)))
 #define ARG_FLAG(s) (strcmp(s,argv[i])==0)
@@ -482,11 +515,13 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 		if (ARG_FLAG("-?") || ARG_FLAG("-h") || ARG_FLAG("--help")) {
 			(void) help();
 			return false;
+
 		/* input */
 		} else if ( ARG_SPARAM("-s") || ARG_LPARAM("--start-address=") ) {
 			opt->start_address = strtoul( sub, NULL, 0 );
 		} else if ( ARG_SPARAM("-e") || ARG_LPARAM("--end-address=") ) {
 			opt->end_address = strtoul( sub, NULL, 0 );
+
 		/* memory */
 		} else if ( ARG_SPARAM("-l") || ARG_LPARAM("--length=") ) {
 			if ( opt->data_length != 0 ) {
@@ -496,6 +531,30 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 			opt->data_length = (int)strtoul( sub, NULL, 0 );
 		} else if ( ARG_SPARAM("-f") || ARG_LPARAM("--fields=") ) {
 			opt->data_fields= (int)strtoul( sub, NULL, 0 );
+		} else if ( ARG_SPARAM("-r") || ARG_LPARAM("--reorder=") ) {
+			uint64_t order;
+			int j, k;
+			if ( opt->data_length != 0 ) {
+				(void)verbose_printf( VERB_ERR, "Error: can't set opt -r and -l at once.\n" );
+				return false;
+			}
+			order            = (uint64_t) strtoull( sub, NULL, 16 );
+			opt->data_length = (int)strlen( sub );
+			if ( opt->data_length <= 1 || opt->data_length > 8 ) {
+				verbose_printf( VERB_ERR, "Error: order string is too long or <= 1 - len=%d\n", opt->data_length );
+				return false;
+			}
+			for ( j=0, k=(opt->data_length*4)-4; j < opt->data_length; j++, k-=4 ) {
+				opt->data_order[j] = (int)((order >> k) & 0xFuLL);
+				if ( opt->data_order[j] >= opt->data_length ) {
+					verbose_printf( VERB_ERR, "Error: data reordering pattern is out of range - %x\n", opt->data_order[i] );
+					return false;
+				}
+			}
+			(void)verbose_printf( VERB_DEBUG, "bldump: set order len=%d pat=", opt->data_length );
+			for ( j=0; j<opt->data_length; j++ ) (void)verbose_printf( VERB_DEBUG, "%2d ", opt->data_order[j] );
+			(void)verbose_printf( VERB_DEBUG, "\n" );
+
 		/* output */
 		} else if ( ARG_FLAG("-a") || ARG_FLAG("--show-address") ) {
 			opt->show_address = true;
@@ -509,9 +568,11 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 			opt->output_format = "%llu";
 		} else if ( ARG_FLAG("-b") || ARG_FLAG("--binary") ) {
 			opt->output_type = BINARY;
+
 		/* debug */
 		} else if ( ARG_SPARAM("-v") || ARG_LPARAM("--verbose=") ) {
 			verbose_level = (unsigned int)strtoul( sub, NULL, 0 ); 
+
 		/* error */
 		} else if ( argv[i][0] == '-' ) {
 			(void)verbose_printf( VERB_ERR, "Error: unsupported option - %s\n", argv[i] );
@@ -521,6 +582,7 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 		}
 	}
 
+	/* file name */
 	if ( argc - i > 0 ) {
 		assert( strlen(argv[i]) != 0 );
 		opt->infile_name = strclone( argv[i] );
@@ -538,12 +600,14 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 		opt->outfile_name = NULL;
 	}
 
+	/* delimitter */
 	if ( opt->col_delimitter == NULL ) {
 		opt->col_delimitter  = strclone( " " );
 	}
 	if ( opt->row_delimitter == NULL ) {
 		opt->row_delimitter  = strclone( "\n" );
 	}
+
 	if ( opt->data_length == 0 ) {
 		opt->data_length = 1;
 	}
@@ -767,7 +831,9 @@ bool file_read( file_t* file, memory_t* memory, size_t nmemb )
 
 	assert( nmemb <= memory->length - memory->size ); /* nmemb must be set to 'memory' memory area. */
 
-	if ( nmemb <= 0 ) {
+	if ( feof(file->ptr) == 1 ) {
+		is = true;
+	} else if ( nmemb <= 0 ) {
 		is = false;
 	} else {
 		pos   = file->position;
@@ -776,7 +842,11 @@ bool file_read( file_t* file, memory_t* memory, size_t nmemb )
 		(void)verbose_printf( VERB_LOG, "bldump: fread - ret=%d, size=%d nmemb=%d fp=%x mem=%x\n", reads, size, nmemb, file->ptr, memory->data );
 
 		if ( reads == 0 ) {
-			is = false;
+			if ( feof(file->ptr) == 1 ) {
+				is = true;
+			} else {
+				is = false;
+			}
 		} else {
 			if ( memory->size == 0 ) {
 				memory->address = pos;

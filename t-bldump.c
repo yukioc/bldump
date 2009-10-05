@@ -234,7 +234,7 @@ static void tc_bldump_read(void)
 
 		(void)file_open( &infile, t_tmpname, "rt" );
 		is = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( is, false );
+		CU_ASSERT_EQUAL( is, true );
 
 		(void)file_close( &infile );
 	}
@@ -267,7 +267,7 @@ static void tc_bldump_read(void)
 
 		/* 3 */
 		is = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( is,             false );
+		CU_ASSERT_EQUAL( is,             true );
 		CU_ASSERT_EQUAL( memory.size,    0 );
 		CU_ASSERT_EQUAL( memory.address, 0 );
 
@@ -537,6 +537,81 @@ static void tc_bldump_binary(void)
 	}
 }
 
+/*!
+ * @brief test of reordering of bldump_read().
+ */
+static void tc_bldump_reorder(void)
+{
+	bool is;
+	int i;
+	file_t infile;
+	memory_t memory;
+	options_t opt;
+	char data[6] = { 0x80, 0x81, 0x82, 0x83, 0x84 } ;
+
+	file_reset( &infile );
+	memory_init( &memory );
+	options_reset( &opt );
+
+	/* make test file */
+	{
+		FILE* in = fopen( t_tmpname, "wt" );
+		assert( in != NULL );
+		fwrite( data, 1, 6, in);
+		fclose( in );
+	}
+
+	(void) memory_allocate( &memory, 16 );
+
+	{
+		(void)file_open( &infile, t_tmpname, "rt" );
+
+		opt.data_order[0] = 2;
+		opt.data_order[1] = 1;
+		opt.data_order[2] = 0;
+		opt.data_length   = 3;
+
+		is = bldump_read( &memory, &infile, &opt );
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( memory.size, 6 );
+		CU_ASSERT_EQUAL( memory.data[0], 0x82 );
+		CU_ASSERT_EQUAL( memory.data[1], 0x81 );
+		CU_ASSERT_EQUAL( memory.data[2], 0x80 );
+		CU_ASSERT_EQUAL( memory.data[3], 0x00 );
+		CU_ASSERT_EQUAL( memory.data[4], 0x84 );
+		CU_ASSERT_EQUAL( memory.data[5], 0x83 );
+
+		(void)file_close( &infile );
+	}
+
+	{
+		(void)file_open( &infile, t_tmpname, "rt" );
+
+		opt.data_order[0] = 0;
+		opt.data_order[1] = 1;
+		opt.data_order[2] = 2;
+		opt.data_order[3] = 3;
+		opt.data_order[4] = 4;
+		opt.data_order[5] = 0;
+		opt.data_order[6] = 1;
+		opt.data_length   = 7;
+
+		is = bldump_read( &memory, &infile, &opt );
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( memory.size, 6 );
+		CU_ASSERT_EQUAL( memory.data[0], 0x80 );
+		CU_ASSERT_EQUAL( memory.data[1], 0x81 );
+		CU_ASSERT_EQUAL( memory.data[2], 0x82 );
+		CU_ASSERT_EQUAL( memory.data[3], 0x83 );
+		CU_ASSERT_EQUAL( memory.data[4], 0x84 );
+		CU_ASSERT_EQUAL( memory.data[5], 0x80 );
+		CU_ASSERT_EQUAL( memory.data[6], 0x81 );
+
+		(void)file_close( &infile );
+	}
+
+
+}
 
 CU_ErrorCode ts_bldump_regist(void)
 {
@@ -545,6 +620,7 @@ CU_ErrorCode ts_bldump_regist(void)
 		{ "strfree()"                 , tc_strfree }      , 
 		{ "bldump_setup()"            , tc_bldump_setup } , 
 		{ "bldump_read()"             , tc_bldump_read }  , 
+		{ "bldump_read(reordering)"   , tc_bldump_reorder } ,
 		{ "bldump_write(HEXADECIMAL)" , tc_bldump_hexadecimal }   , 
 		{ "bldump_write(DECIMAL)"     , tc_bldump_decimal }   , 
 		{ "bldump_write(UDECIMAL)"    , tc_bldump_udecimal }   , 
