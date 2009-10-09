@@ -107,9 +107,10 @@ INSTALLATION
 
 HISTORY
 
-  v.0.x
+  v.0.3
     * '-b' output binary.
     * '-r' change byte-order of the input data.
+    * '-S' skip data to searching for <hex> pattern
 
   v.0.2
     * '-l,-f' set size of data and number of fields
@@ -126,9 +127,6 @@ HISTORY
 ROADMAP
 
   v.1.0
-    * hex pattern searching
-
-  v.x.x
     * text file parsing
     * display character.
 
