@@ -31,6 +31,9 @@ OPTIONS
   -s <num>, --start-address=<num>
     Skip <num> bytes from the beggining of the inputs.
 
+  -S <hex>, --search=<hex>
+    Skip data to searching for <hex> pattern.
+
   -e <num>, --end-address=<num>
     Stop reading data reached to the <num> address.
 
@@ -84,6 +87,14 @@ EXAMPLES
     $ ./bldump -r 3210 t-bldump.tmp 
     33323130 37363534
 
+  bldump -l 2 -f 1 -S 20 -a <infile>
+    Display hexadecimal text contained the space.
+    $ echo 'ABC DEF GHI JKL' > t-bldump.tmp
+    $ ./bldump -l 2 -f 1 -S 20 -a t-bldump.tmp
+    00000003: 2044
+    00000007: 2047
+    0000000b: 204a
+
 INSTALLATION
 
   type 'make test' to run unit tests.
@@ -119,4 +130,5 @@ ROADMAP
 
   v.x.x
     * text file parsing
+    * display character.
 

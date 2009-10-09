@@ -233,6 +233,99 @@ static void tc_file_write(void)
 	}
 }
 
+/*!
+ * @brief test of file_search.
+ */
+static void tc_file_search(void)
+{
+	bool is;
+	file_t file;
+	memory_t memory;
+	options_t opt;
+
+	options_reset( &opt );
+
+	file_reset( &file );
+	file_open( &file, t_tmpname, "rt" ); /* hello */
+
+	memory_init( &memory );
+	memory_allocate( &memory, 10 );
+	
+
+	/* search 'll' */
+	{
+		memory_clear( &memory );
+		opt.search_pattern = 0x6c6c;
+		opt.search_length  = 16;
+
+		is = file_search( &file, &memory, &opt );
+		CU_ASSERT_EQUAL( is,             true );
+		CU_ASSERT_EQUAL( file.position,  4 );
+		CU_ASSERT_EQUAL( memory.address, 2 );
+		CU_ASSERT_EQUAL( memory.size,    2 );
+		CU_ASSERT_EQUAL( memory.data[0], 0x6c );
+		CU_ASSERT_EQUAL( memory.data[1], 0x6c );
+	}
+
+	/* detect EOF on charging */
+	{
+		memory_clear( &memory );
+		opt.search_pattern = 0x6c6c;
+		opt.search_length  = 16;
+		is = file_search( &file, &memory, &opt );
+		CU_ASSERT_EQUAL( is, false );
+	}
+
+	/* detect EOF before charging */
+	{
+		memory_clear( &memory );
+		is = file_search( &file, &memory, &opt );
+		CU_ASSERT_EQUAL( is, false );
+	}
+
+	/* detect EOF on searching */
+	{
+		memory_clear( &memory );
+		file_close( &file );
+		file_open( &file, t_tmpname, "rt" ); /* hello */
+
+		opt.search_pattern = 0xAAAA; //not existing
+		opt.search_length  = 16;
+		is = file_search( &file, &memory, &opt );
+		CU_ASSERT_EQUAL( is, false );
+	}
+
+	/* detect end_address on charging */
+	{
+		memory_clear( &memory );
+		file_close( &file );
+		file_open( &file, t_tmpname, "rt" ); /* hello */
+
+		opt.search_pattern = 0xAAAA; //not existing
+		opt.search_length  = 16;
+		opt.end_address    = 1;
+		is = file_search( &file, &memory, &opt );
+		CU_ASSERT_EQUAL( is, false );
+	}
+
+	/* detect end_address on charging */
+	{
+		memory_clear( &memory );
+		file_close( &file );
+		file_open( &file, t_tmpname, "rt" ); /* hello */
+
+		opt.search_pattern = 0xAAAA; //not existing
+		opt.search_length  = 16;
+		opt.end_address    = 3;
+		is = file_search( &file, &memory, &opt );
+		CU_ASSERT_EQUAL( is, false );
+	}
+
+	file_close( &file );
+	memory_free( &memory );
+}
+
+
 CU_ErrorCode ts_file_regist(void)
 {
 	CU_TestInfo ts_file_cases[] = {
@@ -241,7 +334,8 @@ CU_ErrorCode ts_file_regist(void)
 		{ "file_close()" , tc_file_close } , 
 		{ "file_seek()"  , tc_file_seek }  , 
 		{ "file_read()"  , tc_file_read }  , 
-		{ "file_write()" , tc_file_write } , 
+		{ "file_search()", tc_file_search } ,
+		{ "file_write()" , tc_file_write } ,  // this test overwrite t_tmpname file.
 		CU_TEST_INFO_NULL
 	};
 

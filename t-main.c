@@ -145,6 +145,41 @@ static void tc_main_csv(void)
 	CU_ASSERT_NSTRING_EQUAL( act, "71,72,73,74,75", 14 );
 }
 
+/*!
+ * @brief test "bldump -l 2 -f 1 -a -S FF"
+ */
+static void tc_main_search(void)
+{
+	int ret;
+	char act[80];
+	char* argv[] = { "bldump", "-l", "2", "-f", "1", "-a", "-S", "FF", t_tmpname };
+	char exp[] = {
+		0x01, 0x02, 0xFF, 0x04, 0xBB, 0xFF, 0x07, 0x08,
+		0xFF, 0xBB, 0x0B, 0xFF, 0x0D, 0x0E, 0xFB
+	};
+
+	fseek( t_stdout, 0, SEEK_SET );
+
+	/* make input data */
+	FILE* fp = fopen( t_tmpname, "wb" );
+	assert( fp != NULL );
+	fwrite( exp, 1, sizeof(exp), fp );
+	fclose( fp );
+
+	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	CU_ASSERT_EQUAL( ret, 0 );
+
+	fflush( t_stdout );
+	fseek( t_stdout, 0, SEEK_SET );
+	fgets( act, sizeof(act), t_stdout );
+	CU_ASSERT_NSTRING_EQUAL( act, "00000002: ff04", 14 );
+	fgets( act, sizeof(act), t_stdout );
+	CU_ASSERT_NSTRING_EQUAL( act, "00000005: ff07", 14 );
+	fgets( act, sizeof(act), t_stdout );
+	CU_ASSERT_NSTRING_EQUAL( act, "00000008: ffbb", 14 );
+
+	remove( t_tmpname );
+}
 
 /*!
  * @brief test "bldump --version"
@@ -173,6 +208,7 @@ CU_ErrorCode ts_main_regist(void)
 		{ "bldump -a", tc_main_hex },
 		{ "bldump -i -d ,", tc_main_csv },
 		{ "bldump -r 3210", tc_main_reorder },
+		{ "bldump -l 2 -f 1 -a -S FF", tc_main_search },
 		{ "bldump --version", tc_main_ver },
 		CU_TEST_INFO_NULL
 	};

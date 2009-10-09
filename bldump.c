@@ -52,6 +52,9 @@ const static char *usage[] = {
 	"  -e <num>, --end-address=<num>",
 	"    Stop reading data reached to the <num> address.",
 	"",
+	"  -S<hex>, --search=<hex>",
+	"    Skip data to searching for <hex> pattern.",
+	"",
 	/* output */
 	"  -i, --decimal",
 	"    Displays decimal.",
@@ -268,8 +271,15 @@ bool bldump_read( memory_t* memory, file_t* infile, /*@unused@*/ options_t* opt 
 	DEBUG_ASSERT( memory->length > 0 );
 
 	memory_clear( memory );
-	nmemb = memory->length - memory->size;
 
+	if ( opt->search_length > 0 ) {
+		is = file_search( infile, memory, opt );
+		if ( is == false ) {
+			return true;
+		}
+	}
+
+	nmemb = memory->length - memory->size;
 	if ( opt->end_address != 0 ) {
 		if ( infile->position >= opt->end_address ) {
 			return false;
@@ -521,6 +531,18 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 			opt->start_address = strtoul( sub, NULL, 0 );
 		} else if ( ARG_SPARAM("-e") || ARG_LPARAM("--end-address=") ) {
 			opt->end_address = strtoul( sub, NULL, 0 );
+		} else if ( ARG_SPARAM("-S") || ARG_LPARAM("--search=") ) {
+			char fmt[64];
+			int length = strlen( sub );
+			opt->search_pattern = (uint64_t) strtoull( sub, (char**)NULL, 16 );
+			if ( (length & 1) != 0 ) {
+				(void)verbose_printf( VERB_WARNING, "Warning: pattern should be byte align, append 4 bit for stuffing.\n" );
+				length++;
+				opt->search_pattern = opt->search_pattern << 4;
+			}
+			opt->search_length  = (long)length * 4uL; // number of bits
+			/*@i@*/ sprintf( fmt, "bldump: set searching pattern - pat=0x%%0%dllx, size=%%ld \n", length );
+			(void)verbose_printf( VERB_LOG, fmt, opt->search_pattern, opt->search_length );
 
 		/* memory */
 		} else if ( ARG_SPARAM("-l") || ARG_LPARAM("--length=") ) {
@@ -870,6 +892,77 @@ void file_write( file_t* file, memory_t* memory )
 	file->length += nmemb;
 }
 
+/*!
+ * @brief search the pattern in file.
+ * @param[in] file   file information.
+ * @param[in] search searching information.
+ * @retval true found target pattern.
+ * @retval false not found (proberbly reached EOF).
+ */
+bool file_search( file_t* file, memory_t* memory, options_t* opt )
+{
+	int i, j;
+	size_t m;
+	uint64_t mask = (uint64_t)((0x1uLL << opt->search_length) - 0x1uLL);
+	uint64_t read = 0;
+	int search_bytes = opt->search_length/8;
+
+	DEBUG_ASSERT( memory->size == 0 );
+	DEBUG_ASSERT( opt->search_length > 0 );
+
+	verbose_printf( VERB_TRACE, "bldump: file_search - mask=0x%llx pat=0x%llx\n",
+		mask, opt->search_pattern );
+
+	if ( feof(file->ptr) ) {
+		(void)verbose_printf( VERB_TRACE, "bldump: detected EOF on file searching.\n" );
+		return false;
+	}
+
+	// charge buffer.
+	for ( i = 0; i < search_bytes; i++ ) {
+		if ( (opt->end_address > 0) && (opt->end_address <= (size_t)ftell(file->ptr)) ) {
+			(void)verbose_printf( VERB_TRACE, "bldump: detected end address on file searching.\n" );
+			return false;
+		}
+
+		read = (read << 8) | ((uint8_t)fgetc(file->ptr));
+
+		if ( feof(file->ptr) ) {
+			(void)verbose_printf( VERB_TRACE, "bldump: detected EOF on file searching.\n" );
+			return false;
+		}
+	}
+
+	// search for pattern
+	while ( (read & mask) != opt->search_pattern ) {
+		if ( opt->end_address > 0 && opt->end_address <= (size_t)ftell(file->ptr) ) {
+			(void)verbose_printf( VERB_TRACE, "bldump: detected end address on file searching.\n" );
+			return false;
+		}
+
+		read = (read << 8) | ((uint8_t)fgetc(file->ptr));
+
+		if ( feof(file->ptr) ) {
+			(void)verbose_printf( VERB_TRACE, "bldump: detected EOF on file searching.\n" );
+			return false;
+		}
+	};
+
+	// read file and write to memory.
+	assert( (read & mask) == opt->search_pattern );
+
+	file->position  = (size_t) ftell(file->ptr);
+	memory->address = file->position - search_bytes;
+	
+	for ( i = search_bytes-1; i >= 0; i-- ) {
+		if ( i < memory->length ) {
+			memory->data[i] = (data_t)(opt->search_pattern >> (i*8));
+		}
+	}
+	memory->size = search_bytes;
+
+	return true;
+}
 
 /*!
  * @brief display help message.
@@ -888,16 +981,17 @@ int help(void) //{{{
  * @param[in] str string to clone.
  * @retval string memory pointer that point new memory and set string same as 'str'.
  */
-char* strclone( const char* str )
+char* strclone( const char* str ) //{{{
 {
 	char* retval;
-	assert( str != NULL );
-	assert( strlen(str) > 0 );
+	DEBUG_ASSERT( str != NULL );
+	DEBUG_ASSERT( strlen(str) > 0 );
 
 	retval = (char*)malloc( strlen(str)+1 );
 	strcpy( retval, str );
 	return retval;
 }
+//}}}
 
 /*!
  * @brief free memory of string.
@@ -905,9 +999,9 @@ char* strclone( const char* str )
  * @retval true success.
  * @retval false failure.
  */
-bool strfree( char* str )
+bool strfree( char* str ) //{{{
 {
-	bool retval = true;
+	bool retval = true;/*{{{*//*}}}*/
 	if ( str != NULL ) {
 		free( str );
 	} else {
@@ -915,6 +1009,7 @@ bool strfree( char* str )
 	}
 	return retval;
 }
+//}}}
 
 
 /* vim:fdm=marker:

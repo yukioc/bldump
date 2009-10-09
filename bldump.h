@@ -24,8 +24,10 @@ typedef struct {
 	char*        outfile_name; /*!< <outfile> */
 
 	/* input */
-	size_t		start_address; /*!< -s : start reading address(skip bytes). */
-	size_t		end_address;   /*!< -l : end reading address */
+	size_t       start_address;  /*!< -s : start reading address(skip bytes). */
+	size_t       end_address;    /*!< -l : end reading address */
+	uint64_t     search_pattern; /*!< -S : searching word */
+	size_t       search_length;  /*!< -S : searching word length */
 
 	/* container */
 	int			data_fields;   /*!< -f : input data fields. */
@@ -89,6 +91,7 @@ bool file_open( file_t* file, const char* name, const char* mode );
 bool file_close( file_t* file );
 bool file_read( file_t* file, memory_t* memory, size_t nmemb );
 void file_write( file_t* file, memory_t* memory );
+bool file_search( file_t* file, memory_t* memory, options_t* opt );
 
 /*** utility ***/
 char* strclone( const char* str );

@@ -547,6 +547,46 @@ static void tc_opt_reorder(void)
 	}
 }
 
+/*!
+ * @brief test -S, --search
+ */
+static void tc_opt_search(void)
+{
+	options_t opt;
+	bool is;
+
+	/* -S */
+	{
+		char* argv[] = { "bldump", "-S", "0123", "infile" };
+		options_reset( &opt );
+
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.search_pattern, 0x0123 );
+		CU_ASSERT_EQUAL( opt.search_length,  16 );
+	}
+
+	/* --search */
+	{
+		char* argv[] = { "bldump", "--search=234567", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( is, true );
+		CU_ASSERT_EQUAL( opt.search_pattern, 0x234567 );
+		CU_ASSERT_EQUAL( opt.search_length,  24 );
+	}
+
+	/* -S 1 (error) */
+	{
+		char* argv[] = { "bldump", "-S", "1", "infile" };
+		options_reset( &opt );
+		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		CU_ASSERT_EQUAL( opt.search_pattern, 0x10 );
+		CU_ASSERT_EQUAL( opt.search_length,  8 );
+		//printf("search: len=%d, pat=%x\n", opt.search_length, opt.search_pattern );
+	}
+}
+
 CU_ErrorCode ts_opt_regist(void)
 {
 	CU_TestInfo ts_opt_cases[] = {
@@ -566,6 +606,7 @@ CU_ErrorCode ts_opt_regist(void)
 		{ "options_load( bldump -b|--binary)", tc_opt_bin },
 		{ "options_load( bldump -e|--end-address)", tc_opt_end },
 		{ "options_load( bldump -r|--reorder)", tc_opt_reorder },
+		{ "options_load( bldump -S|--search)", tc_opt_search },
 		CU_TEST_INFO_NULL
 	};
 
