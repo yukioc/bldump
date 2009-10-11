@@ -26,18 +26,20 @@ unsigned int verbose_level = VERB_DEFAULT;
 
 /*!
  * @brief output stream.
- *
- * default stream is 'stdout'.
+ * default stream is NULL that's mean no-displaying.
  */
-FILE* verbose_out = stdout;
+FILE* verbose_out = NULL;
 
 /*!
- * @brief verbose vprintf
+ * @brief verbose vprintf.
+ * @param[in] level effective level.
+ * @param[in] fmt output text format.
+ * @param[in] ap arguments.
  */
 static int verbose_vprintf( unsigned int level, const char *fmt, va_list ap ) 
 {
 	int ret=0;
-	if ( verbose_level >= level ) {
+	if ( verbose_level >= level && verbose_out != NULL ) {
 		ret=vfprintf( verbose_out, fmt, ap );
 	}
 	return ret;

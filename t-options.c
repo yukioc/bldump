@@ -13,8 +13,8 @@
 
 static int ts_opt_init(void)
 {
-	if ( verbose_out != stdout ) {
-		fprintf( stderr, "Error: verbose_out is not stdout\n" );
+	if ( verbose_out != NULL ) {
+		fprintf( stderr, "Error: verbose_out is not NULL\n" );
 		return 1;
 	}
 
@@ -39,7 +39,7 @@ static int ts_opt_cleanup(void)
 	t_stdin = NULL;
 	t_stdout = NULL;
 	t_stderr = NULL;
-	verbose_out = stdout;
+	verbose_out = NULL;
 
 	return 0;
 }

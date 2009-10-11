@@ -65,11 +65,6 @@ static void tc_verbose_die(void)
 	/* nothing */
 }
 
-
-#if 0
-static FILE* tmpout = NULL;
-#endif
-
 /*!
  * @brief The suite initialization function.
  * @retval zero on success.
@@ -77,17 +72,13 @@ static FILE* tmpout = NULL;
  */
 static int ts_verbose_init(void)
 {
-	FILE* tmp;
+	assert( verbose_out == NULL );
 
-	assert( verbose_out = stdout );
+	verbose_out = tmpfile();
 
-	tmp = tmpfile();
-
-	if ( tmp == NULL ) {
+	if ( verbose_out == NULL ) {
 		fprintf( stderr, "Error: tmpfile() failure - errorno = %d\n.", errno );
 		return 1;
-	} else {
-		verbose_out = tmp;
 	}
 	return 0;
 }
@@ -99,8 +90,12 @@ static int ts_verbose_init(void)
  */
 static int ts_verbose_cleanup(void)
 {
-	if ( verbose_out != stdout ) (void)fclose( verbose_out );
-	verbose_out = stdout;
+	if ( verbose_out == NULL || verbose_out == stdout ) {
+		return 1;
+	} 
+
+	(void)fclose( verbose_out );
+	verbose_out = NULL;
 	return 0;
 }
 

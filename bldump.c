@@ -125,8 +125,6 @@ int main( int argc, char* argv[] )
 	file_t    outfile;
 	memory_t  memory;
 
-	verbose_level = VERB_DEFAULT;
-
 	if ( argc == 2 && strcmp("--version", argv[1]) == 0  ) {
 		fprintf( (STDOUT)?STDOUT:stdout, "bldump version %s (%s)\n", VERSION, BUILD );
 		return 0;
@@ -161,6 +159,9 @@ int main( int argc, char* argv[] )
 
 
 	/*** prepare ***/
+	verbose_level = VERB_DEFAULT;
+	if ( verbose_out == NULL ) verbose_out = stdout;
+
 	options_reset( &opt );  
 	memory_init( &memory );
 	file_reset( &infile );
