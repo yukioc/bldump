@@ -40,8 +40,12 @@ OPTIONS
   -i, --decimal
     Displays decimal.
 
-  -u, --unsigned",
+  -u, --unsigned
     Displays unsigned decimal.
+
+  -A, --ascii
+    Displays character.
+
 
   -b, --binary
     Outputs binary.

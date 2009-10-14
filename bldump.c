@@ -62,6 +62,9 @@ const static char *usage[] = {
 	"  -u, --unsigned",
 	"    Displays unsigned decimal.",
 	"",
+	"  -A, --ascii",
+	"    Displays character.",
+	"",
 	"  -b, --binary",
 	"    Outputs binary.",
 	"",
@@ -352,6 +355,10 @@ bool bldump_write( memory_t* memory, file_t* outfile, options_t* opt )
 		case BINARY:
 			file_write( outfile, memory );
 			break;
+		case ASCII:
+			to_printable( memory );
+			write_hex( memory, outfile, opt );
+			break;
 	}
 	return true ;
 }
@@ -435,6 +442,17 @@ void write_dec( memory_t* memory, file_t* outfile, options_t* opt )
 		(void)fprintf( outfile->ptr, opt->output_format, (long long int)data );
 	}
 	(void)fputs( opt->row_delimitter, outfile->ptr ); /* line separater */
+}
+
+void to_printable( memory_t* memory )
+{
+	int i;
+	for ( i = 0; i < memory->size; i++ )
+	{
+		if ( isprint( memory->data[i] ) == 0 ) {
+			memory->data[i] = '.';
+		}
+	}
 }
 
 //##############################################################################
@@ -591,6 +609,9 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 			opt->output_format = "%llu";
 		} else if ( ARG_FLAG("-b") || ARG_FLAG("--binary") ) {
 			opt->output_type = BINARY;
+		} else if ( ARG_FLAG("-A") || ARG_FLAG("--ascii") ) {
+			opt->output_type = ASCII;
+			opt->output_format = "%c";
 
 		/* debug */
 		} else if ( ARG_SPARAM("-v") || ARG_LPARAM("--verbose=") ) {
@@ -986,7 +1007,6 @@ char* strclone( const char* str ) //{{{
 {
 	char* retval;
 	DEBUG_ASSERT( str != NULL );
-	DEBUG_ASSERT( strlen(str) > 0 );
 
 	retval = (char*)malloc( strlen(str)+1 );
 	strcpy( retval, str );

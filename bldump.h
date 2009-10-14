@@ -16,7 +16,7 @@
  ******************/
 /*** enum ***/
 typedef enum {
-	HEXADECIMAL = 0, DECIMAL, UDECIMAL, BINARY
+	HEXADECIMAL = 0, DECIMAL, UDECIMAL, BINARY, ASCII
 } OUTPUT_TYPE;
 
 typedef struct {
@@ -73,6 +73,7 @@ bool bldump_read( memory_t* memory, file_t* infile, options_t* opt );
 bool bldump_write( memory_t* memory, file_t* outfile, options_t* opt );
 void write_hex( memory_t* memory, file_t* file, options_t* opt );
 void write_dec( memory_t* memory, file_t* outfile, options_t* opt );
+void to_printable( memory_t* memory );
 
 /*** options ***/
 void options_reset( /*@out@*/ options_t* opt );
