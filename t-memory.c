@@ -51,9 +51,7 @@ static int ts_memory_cleanup(void)
  */
 static void tc_memory_init(void)
 {
-	bool ret;
 	memory_t memory;
-	
 	memset( &memory, 0xcc, sizeof(memory_t) );
 	memory_init( &memory );
 	CU_ASSERT_EQUAL(    memory.address,  0L );
@@ -99,7 +97,6 @@ static void tc_memory_allocate(void)
  */
 static void tc_memory_clear(void)
 {
-	bool ret;
 	memory_t memory;
 	memory_init( &memory );
 	memory_allocate( &memory, 10 );

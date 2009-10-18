@@ -91,15 +91,22 @@ doxygen:
 .PHONEY: splint
 splint:
 	@echo "### splint"
-	splint -standard		\
-		-duplicatequals			\
-		-mustfreeonly			\
+#	splint -standard 
+	splint -weak \
+		-duplicatequals \
+		-mustfreeonly \
 		-observertrans -statictrans -nullstate \
 		-compdestroy \
 		-sefparams \
 		-unqualifiedtrans -branchstate -globstate \
 		+longunsignedintegral \
-		-I. -DBLDUMP_DEBUG		\
+		-boolcompare \
+		-shiftnegative \
+		-formatconst \
+		-shiftimplementation \
+		-unrecog \
+		-dependenttrans \
+		-I. -DBLDUMP_DEBUG \
 		$(ALL_SRC)
 
 ##### SUFFIX

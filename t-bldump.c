@@ -60,7 +60,7 @@ static void tc_help(void)
 	ret=help();
 	pos2 = ftell(t_stderr);
 
-	CU_ASSERT_EQUAL( ret, EXIT_FAILURE);
+	CU_ASSERT_EQUAL( ret, EXIT_FAILURE );
 	CU_ASSERT(pos2 - pos1 > 0); /* count of the help message */
 }
 
@@ -382,7 +382,7 @@ static void tc_bldump_decimal(void)
 	options_reset( &opt );
 
 	(void) memory_allocate( &memory, 16 );
-	for ( i=0; i<16; i++ ) memory.data[i] = data[i];
+	for ( i=0; i<16; i++ ) memory.data[i] = (data_t) data[i];
 	memory.size    = 16;
 	memory.address = 0xAAAA5555;
 
@@ -453,7 +453,7 @@ static void tc_bldump_udecimal(void)
 	options_reset( &opt );
 
 	(void) memory_allocate( &memory, 16 );
-	for ( i=0; i<16; i++ ) memory.data[i] = data[i];
+	for ( i=0; i<16; i++ ) memory.data[i] = (data_t) data[i];
 	memory.size    = 16;
 	memory.address = 0xAAAA5555;
 
@@ -514,13 +514,14 @@ static void tc_bldump_binary(void)
 	memory_t memory;
 	options_t opt;
 	char data[3] = { 0x01, 0x02, 0x03 } ;
+
 	file_reset( &outfile );
 	memory_init( &memory );
 	options_reset( &opt );
 
 	(void) memory_allocate( &memory, 7 );
-	memset( memory.data, 0xcc, memory.length );	
-	for ( i=0; i<3; i++ ) memory.data[i] = data[i];
+	memset( memory.data, 0xcc, memory.length );
+	for ( i=0; i<3; i++ ) memory.data[i] = (data_t) data[i];
 	memory.size = 3;
 
 	/* 0x01, 0x02, 0x03 */
@@ -550,11 +551,10 @@ static void tc_bldump_binary(void)
 static void tc_bldump_reorder(void)
 {
 	bool is;
-	int i;
 	file_t infile;
 	memory_t memory;
 	options_t opt;
-	char data[6] = { 0x80, 0x81, 0x82, 0x83, 0x84 } ;
+	char data[] = { 0x80, 0x81, 0x82, 0x83, 0x84 } ;
 
 	file_reset( &infile );
 	memory_init( &memory );
@@ -564,7 +564,7 @@ static void tc_bldump_reorder(void)
 	{
 		FILE* in = fopen( t_tmpname, "wt" );
 		assert( in != NULL );
-		fwrite( data, 1, 6, in);
+		(void)fwrite( data, 1, (int)sizeof(data)/sizeof(char), in);
 		fclose( in );
 	}
 
@@ -580,14 +580,14 @@ static void tc_bldump_reorder(void)
 
 		is = bldump_read( &memory, &infile, &opt );
 		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( memory.size, 6 );
+		CU_ASSERT_EQUAL( memory.size, 5 );
+		/* 80,81,82 -> 82,81,80 */
 		CU_ASSERT_EQUAL( memory.data[0], 0x82 );
 		CU_ASSERT_EQUAL( memory.data[1], 0x81 );
 		CU_ASSERT_EQUAL( memory.data[2], 0x80 );
+		/* 83,84,(00) -> 00,84 */
 		CU_ASSERT_EQUAL( memory.data[3], 0x00 );
 		CU_ASSERT_EQUAL( memory.data[4], 0x84 );
-		CU_ASSERT_EQUAL( memory.data[5], 0x83 );
-
 		(void)file_close( &infile );
 	}
 

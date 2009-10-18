@@ -32,7 +32,7 @@ enum verbose_level_t {
 };
 
 extern unsigned int   verbose_level;
-extern FILE* verbose_out;
+extern /*@null@*/FILE* verbose_out;
 
 extern int   verbose_printf( unsigned int level, const char *fmt, ... );
 extern int   verbose_die( const char* fmt, ... );

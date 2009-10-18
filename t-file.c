@@ -208,7 +208,7 @@ static void tc_file_write(void)
 	file_t file;
 	memory_t memory;
 	char* s = "foo";
-	int val;
+	size_t val;
 
 	memory_init( &memory );
 	memory_allocate( &memory, 3 );

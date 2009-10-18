@@ -71,6 +71,6 @@ int verbose_die( const char* fmt, ... )
 	ret=verbose_vprintf( VERB_ERR, fmt, ap );
 	va_end( ap );
 	EXIT( EXIT_FAILURE );
-	return ret;
+	/*@i@*/return ret;
 }
 

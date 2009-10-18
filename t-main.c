@@ -52,7 +52,7 @@ static void tc_main_help(void)
 	int ret;
 	char* argv[] = { "bldump" };
 
-	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	ret = main( (int)(sizeof(argv)/sizeof(char*)), argv ); 
 	CU_ASSERT_EQUAL( ret, EXIT_FAILURE );
 }
 
@@ -71,20 +71,22 @@ static void tc_main_hex(void)
 	fseek( t_stdout, 0, SEEK_SET );
 
 	/* make input data */
-	FILE* fp = fopen( t_tmpname, "wb" );
-	assert( fp != NULL );
-	fputs( exp, fp );
-	fclose( fp );
+	{
+		FILE* fp = fopen( t_tmpname, "wb" );
+		assert( fp != NULL );
+		fputs( exp, fp );
+		fclose( fp );
+	}
 
-	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	ret = main( (int)(sizeof(argv)/sizeof(char*)), argv ); 
 	CU_ASSERT_EQUAL( ret, 0 );
 
 	fflush( t_stdout );
 	fseek( t_stdout, 0, SEEK_SET );
-	s = fgets(act, sizeof(act), t_stdout);
+	s = fgets(act, (int)(sizeof(act)), t_stdout);
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, "00000000: 30 31 32 33 34 35 36 37 38 39 41 42 43 44 45 46", 57 );
-	s = fgets(act, sizeof(act), t_stdout);
+	s = fgets(act, (int)(sizeof(act)), t_stdout);
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, "00000010: 47 48 49 4a 4b", 24 );
 }
@@ -103,20 +105,22 @@ static void tc_main_reorder(void)
 	fseek( t_stdout, 0, SEEK_SET );
 
 	/* make input data */
-	FILE* fp = fopen( t_tmpname, "wb" );
-	assert( fp != NULL );
-	fputs( exp, fp );
-	fclose( fp );
+	{
+		FILE* fp = fopen( t_tmpname, "wb" );
+		assert( fp != NULL );
+		fputs( exp, fp );
+		fclose( fp );
+	}
 
-	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	ret = main( (int)(sizeof(argv)/sizeof(char*)), argv ); 
 	CU_ASSERT_EQUAL( ret, 0 );
 
 	fflush( t_stdout );
 	fseek( t_stdout, 0, SEEK_SET );
-	s = fgets(act, sizeof(act), t_stdout);
+	s = fgets(act, (int)(sizeof(act)), t_stdout);
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, "33323130", 8 );
-	s = fgets(act, sizeof(act), t_stdout);
+	s = fgets(act, (int)(sizeof(act)), t_stdout);
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, "37363534", 8 );
 }
@@ -136,20 +140,22 @@ static void tc_main_csv(void)
 	fseek( t_stdout, 0, SEEK_SET );
 
 	/* make input data */
-	FILE* fp = fopen( t_tmpname, "wb" );
-	assert( fp != NULL );
-	fputs( exp, fp );
-	fclose( fp );
+	{
+		FILE* fp = fopen( t_tmpname, "wb" );
+		assert( fp != NULL );
+		fputs( exp, fp );
+		fclose( fp );
+	}
 
-	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	ret = main( (int)(sizeof(argv)/sizeof(char*)), argv ); 
 	CU_ASSERT_EQUAL( ret, 0 );
 
 	fflush( t_stdout );
 	fseek( t_stdout, 0, SEEK_SET );
-	s = fgets(act, sizeof(act), t_stdout);
+	s = fgets(act, (int)(sizeof(act)), t_stdout);
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, "48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70", 47 );
-	s = fgets(act, sizeof(act), t_stdout);
+	s = fgets(act, (int)(sizeof(act)), t_stdout);
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, "71,72,73,74,75", 14 );
 }
@@ -171,23 +177,25 @@ static void tc_main_search(void)
 	fseek( t_stdout, 0, SEEK_SET );
 
 	/* make input data */
-	FILE* fp = fopen( t_tmpname, "wb" );
-	assert( fp != NULL );
-	fwrite( exp, 1, sizeof(exp), fp );
-	fclose( fp );
+	{
+		FILE* fp = fopen( t_tmpname, "wb" );
+		assert( fp != NULL );
+		(void)fwrite( exp, 1, sizeof(exp), fp );
+		fclose( fp );
+	}
 
-	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	ret = main( (int)(sizeof(argv)/sizeof(char*)), argv ); 
 	CU_ASSERT_EQUAL( ret, 0 );
 
 	fflush( t_stdout );
 	fseek( t_stdout, 0, SEEK_SET );
-	s = fgets( act, sizeof(act), t_stdout );
+	s = fgets( act, (int)(sizeof(act)), t_stdout );
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, "00000002: ff04", 14 );
-	s = fgets( act, sizeof(act), t_stdout );
+	s = fgets( act, (int)(sizeof(act)), t_stdout );
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, "00000005: ff07", 14 );
-	s = fgets( act, sizeof(act), t_stdout );
+	s = fgets( act, (int)(sizeof(act)), t_stdout );
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, "00000008: ffbb", 14 );
 
@@ -214,14 +222,14 @@ static void tc_main_ascii(void)
 
 	fseek( t_stdout, 0, SEEK_SET );
 
-	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	ret = main( (int)(sizeof(argv)/sizeof(char*)), argv ); 
 
 	fflush( t_stdout );
 	fseek( t_stdout, 0, SEEK_SET );
-	s = fgets( act, sizeof(act), t_stdout );
+	s = fgets( act, (int)(sizeof(act)), t_stdout );
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, "12.4", 4 );
-	s = fgets( act, sizeof(act), t_stdout );
+	s = fgets( act, (int)(sizeof(act)), t_stdout );
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, ".6", 2 );
 
@@ -240,12 +248,12 @@ static void tc_main_ver(void)
 	char* s;
 
 	fseek( t_stdout, 0, SEEK_SET );
-	ret = main( sizeof(argv)/sizeof(char*), argv ); 
+	ret = main( (int)(sizeof(argv)/sizeof(char*)), argv ); 
 	CU_ASSERT_EQUAL( ret, 0 );
 
 	fflush( t_stdout );
 	fseek( t_stdout, 0, SEEK_SET );
-	s = fgets(act, sizeof(act), t_stdout);
+	s = fgets(act, (int)(sizeof(act)), t_stdout);
 	assert( s == act );
 	CU_ASSERT_NSTRING_EQUAL( act, "bldump version ", 15 );
 }

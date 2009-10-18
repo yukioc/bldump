@@ -123,7 +123,7 @@ static void tc_opt_noopt(void)
 	bool is;
 	char* argv[] = { "bldump", "-" };
 	options_reset( &opt );
-	is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+	is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 	CU_ASSERT_EQUAL( is, false );
 }
 
@@ -136,7 +136,7 @@ static void tc_opt_noarg(void)
 	bool is;
 	char* argv[] = { "bldump" };
 	options_reset( &opt );
-	is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+	is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 	CU_ASSERT_EQUAL( is, false );
 }
 
@@ -152,21 +152,21 @@ static void tc_opt_help(void)
 	{
 		char* argv[] = { "bldump", "-h" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, false );
 	}
 	/* -? */
 	{
 		char* argv[] = { "bldump", "-?" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, false );
 	}
 	/* --help */
 	{
 		char* argv[] = { "bldump", "--help" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, false );
 	}
 }
@@ -183,7 +183,7 @@ static void tc_opt_infile_outfile(void)
 	{
 		char* argv[] = { "bldump", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_STRING_EQUAL( opt.infile_name, "infile" );
 		CU_ASSERT_PTR_NULL( opt.outfile_name );
@@ -195,7 +195,7 @@ static void tc_opt_infile_outfile(void)
 		bool is;
 		char* argv[] = { "bldump", "infile", "outfile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_STRING_EQUAL( opt.infile_name, "infile" );
 		CU_ASSERT_STRING_EQUAL( opt.outfile_name, "outfile" );
@@ -214,7 +214,7 @@ static void tc_opt_length(void)
 	{
 		char* argv[] = { "bldump", "-l", "3", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.data_length, 3 );
 		CU_ASSERT_PTR_NULL( opt.outfile_name );
@@ -224,7 +224,7 @@ static void tc_opt_length(void)
 	{
 		char* argv[] = { "bldump", "--length=4", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.data_length, 4 );
 	}
@@ -233,8 +233,8 @@ static void tc_opt_length(void)
 	{
 		char* argv[] = { "bldump", "-l", "3", "--length=4", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); /* duplicated option */
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv );
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); /* duplicated option */
 		CU_ASSERT_EQUAL( is, false );
 	}
 
@@ -252,7 +252,7 @@ static void tc_opt_fields(void)
 	{
 		char* argv[] = { "bldump", "-f", "5", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.data_fields, 5 );
 		CU_ASSERT_PTR_NULL( opt.outfile_name );
@@ -262,7 +262,7 @@ static void tc_opt_fields(void)
 	{
 		char* argv[] = { "bldump", "--fields=6", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.data_fields, 6 );
 	}
@@ -281,7 +281,7 @@ static void tc_opt_address(void)
 		char* argv[] = { "bldump", "-a", "infile" };
 		options_reset( &opt );
 		CU_ASSERT_EQUAL( opt.show_address, false );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.show_address, true );
 		CU_ASSERT_PTR_NULL( opt.outfile_name );
@@ -291,7 +291,7 @@ static void tc_opt_address(void)
 	{
 		char* argv[] = { "bldump", "--show-address", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.show_address, true );
 	}
@@ -310,7 +310,7 @@ static void tc_opt_start(void)
 		char* argv[] = { "bldump", "-s", "1", "infile" };
 		options_reset( &opt );
 		CU_ASSERT_EQUAL( opt.start_address, 0 );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.start_address, 1 );
 	}
@@ -319,7 +319,7 @@ static void tc_opt_start(void)
 	{
 		char* argv[] = { "bldump", "--start-address=2", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.start_address, 2 );
 	}
@@ -338,7 +338,7 @@ static void tc_opt_end(void)
 		char* argv[] = { "bldump", "-e", "1", "infile" };
 		options_reset( &opt );
 		CU_ASSERT_EQUAL( opt.end_address, 0 );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.end_address, 1 );
 	}
@@ -347,7 +347,7 @@ static void tc_opt_end(void)
 	{
 		char* argv[] = { "bldump", "--end-address=2", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.end_address, 2 );
 	}
@@ -364,7 +364,7 @@ static void tc_opt_verbose(void)
 	{
 		char* argv[] = { "bldump", "-v", "3" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, false );
 		CU_ASSERT_EQUAL( verbose_level, 3 );
 	}
@@ -373,7 +373,7 @@ static void tc_opt_verbose(void)
 	{
 		char* argv[] = { "bldump", "--verbose=4", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( verbose_level, 4 );
 	}
@@ -391,7 +391,7 @@ static void tc_opt_delimitter(void)
 	{
 		char* argv[] = { "bldump", "-d", ",", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_STRING_EQUAL( opt.col_delimitter, "," );
 	}
@@ -400,7 +400,7 @@ static void tc_opt_delimitter(void)
 	{
 		char* argv[] = { "bldump", "--delimitter=\t", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_STRING_EQUAL( opt.col_delimitter, "\t" );
 	}
@@ -418,7 +418,7 @@ static void tc_opt_dec(void)
 	{
 		char* argv[] = { "bldump", "-i", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.output_type, DECIMAL );
 		CU_ASSERT_STRING_EQUAL( opt.output_format, "%lld" );
@@ -428,7 +428,7 @@ static void tc_opt_dec(void)
 	{
 		char* argv[] = { "bldump", "--decimal", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.output_type, DECIMAL );
 	}
@@ -446,7 +446,7 @@ static void tc_opt_udec(void)
 	{
 		char* argv[] = { "bldump", "-u", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.output_type, UDECIMAL );
 		CU_ASSERT_STRING_EQUAL( opt.output_format, "%llu" );
@@ -456,7 +456,7 @@ static void tc_opt_udec(void)
 	{
 		char* argv[] = { "bldump", "--decimal", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.output_type, DECIMAL );
 	}
@@ -474,7 +474,7 @@ static void tc_opt_bin(void)
 	{
 		char* argv[] = { "bldump", "-b", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.output_type, BINARY );
 	}
@@ -483,7 +483,7 @@ static void tc_opt_bin(void)
 	{
 		char* argv[] = { "bldump", "--binary", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.output_type, BINARY );
 	}
@@ -503,7 +503,7 @@ static void tc_opt_reorder(void)
 		options_reset( &opt );
 		CU_ASSERT_EQUAL( opt.data_order[0], -1 );
 
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.data_length, 2 );
 		CU_ASSERT_EQUAL( opt.data_order[0], 1 );
@@ -514,7 +514,7 @@ static void tc_opt_reorder(void)
 	{
 		char* argv[] = { "bldump", "--reorder=012", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.data_length, 3 );
 		CU_ASSERT_EQUAL( opt.data_order[0], 0 );
@@ -526,7 +526,7 @@ static void tc_opt_reorder(void)
 	{
 		char* argv[] = { "bldump", "-r", "10", "-r", "10", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, false );
 	}
 
@@ -534,7 +534,7 @@ static void tc_opt_reorder(void)
 	{
 		char* argv[] = { "bldump", "-r", "012345678", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, false );
 	}
 
@@ -542,7 +542,7 @@ static void tc_opt_reorder(void)
 	{
 		char* argv[] = { "bldump", "-r", "31", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, false );
 	}
 }
@@ -560,7 +560,7 @@ static void tc_opt_search(void)
 		char* argv[] = { "bldump", "-S", "0123", "infile" };
 		options_reset( &opt );
 
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.search_pattern, 0x0123 );
 		CU_ASSERT_EQUAL( opt.search_length,  16 );
@@ -570,7 +570,7 @@ static void tc_opt_search(void)
 	{
 		char* argv[] = { "bldump", "--search=234567", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( is, true );
 		CU_ASSERT_EQUAL( opt.search_pattern, 0x234567 );
 		CU_ASSERT_EQUAL( opt.search_length,  24 );
@@ -580,7 +580,7 @@ static void tc_opt_search(void)
 	{
 		char* argv[] = { "bldump", "-S", "1", "infile" };
 		options_reset( &opt );
-		is = options_load( &opt, sizeof(argv)/sizeof(char*), argv ); 
+		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
 		CU_ASSERT_EQUAL( opt.search_pattern, 0x10 );
 		CU_ASSERT_EQUAL( opt.search_length,  8 );
 		//printf("search: len=%d, pat=%x\n", opt.search_length, opt.search_pattern );

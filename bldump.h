@@ -27,11 +27,11 @@ typedef struct {
 	size_t       start_address;  /*!< -s : start reading address(skip bytes). */
 	size_t       end_address;    /*!< -l : end reading address */
 	uint64_t     search_pattern; /*!< -S : searching word */
-	size_t       search_length;  /*!< -S : searching word length */
+	int          search_length;  /*!< -S : searching word length */
 
 	/* container */
 	int			data_fields;   /*!< -f : input data fields. */
-	int			data_length;   /*!< -l : input data length. */
+	size_t		data_length;   /*!< -l : input data length. */
 	int			data_order[8]; /*!< -r : byte order of input data */
 
 	/* output */
@@ -82,20 +82,21 @@ bool options_clear( options_t* opt );
 
 /*** memory ***/
 void memory_init( /*@out@*/ memory_t* memory );
-bool memory_allocate( memory_t* memory, size_t length );
-void memory_clear( memory_t* memory );
-bool memory_free( memory_t* memory );
+bool memory_allocate( /*@partial@*/ memory_t* memory, size_t length );
+void memory_clear( /*@in@*/ memory_t* memory );
+bool memory_free( /*@partial@*/ memory_t* memory );
 
 /*** file ***/
 void file_reset( /*@out@*/ file_t* file );
 bool file_open( file_t* file, const char* name, const char* mode );
+int  file_seek( file_t* file, size_t offset );
 bool file_close( file_t* file );
 bool file_read( file_t* file, memory_t* memory, size_t nmemb );
 void file_write( file_t* file, memory_t* memory );
 bool file_search( file_t* file, memory_t* memory, options_t* opt );
 
 /*** utility ***/
-char* strclone( const char* str );
+/*@null@*/ char* strclone( const char* str );
 bool strfree( char* str );
 
 #ifdef CUNIT

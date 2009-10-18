@@ -111,6 +111,9 @@ INSTALLATION
 
 HISTORY
 
+  v.1.0
+    * '-A' display character.
+
   v.0.3
     * '-b' output binary.
     * '-r' change byte-order of the input data.
@@ -127,10 +130,4 @@ HISTORY
     * hexadecimal display
     * '-h,-?,--help' display help message.
     * added test feature - splint, CUnit add gcov.
-
-ROADMAP
-
-  v.1.0
-    * text file parsing
-    * display character.
 

@@ -203,9 +203,9 @@ int main( int argc, char* argv[] )
 	return (is_ok == true) ? 0 : 1;
 }
 
-//##############################################################################
-// bldump
-//##############################################################################
+/**********
+ * bldump *
+ **********/
 
 /*!
  * @brief setup parameter.
@@ -227,7 +227,7 @@ bool bldump_setup( memory_t* memory, file_t* infile, file_t* outfile, options_t*
 		return false;
 	}
 	if ( opt->start_address > 0 ) {
-		file_seek( infile, opt->start_address ) ;
+		(void)file_seek( infile, opt->start_address ) ;
 	}
 
 	/* outfile */
@@ -243,7 +243,7 @@ bool bldump_setup( memory_t* memory, file_t* infile, file_t* outfile, options_t*
 	}
 
 	/* memory */
-	if ( opt->data_length  <= 0 ) {
+	if ( opt->data_length == 0 ) {
 		(void)verbose_printf( VERB_ERR, "Error: wrong data_length=%d\n", opt->data_length );
 		return false;
 	}
@@ -297,14 +297,12 @@ bool bldump_read( memory_t* memory, file_t* infile, /*@unused@*/ options_t* opt 
 
 	is = file_read( infile, memory, nmemb );
 
-	if ( is == false || memory->size <= 0 ) {
+	if ( is == false || memory->size == 0 ) {
 		(void)verbose_printf( VERB_DEBUG, "bldump: file read failure.\n" );
 	} else {
 		/* reordering */
 		if ( opt->data_order[0] != -1 ) {
-			size_t i;
-			int j, k;
-			int idx = 0;
+			size_t i, j, k, idx = 0;
 			for ( i=0; i<memory->size; i+=opt->data_length ) {
 				uint64_t data = 0;
 				for ( j=0, k=(opt->data_length-1)*8;
@@ -371,9 +369,8 @@ bool bldump_write( memory_t* memory, file_t* outfile, options_t* opt )
  */
 void write_hex( memory_t* memory, file_t* outfile, options_t* opt )
 {
-	size_t i;
-	int j;
-	int data_len = opt->data_length;
+	size_t i, j;
+	size_t data_len = opt->data_length;
 
 	DEBUG_ASSERT( opt->col_delimitter != NULL );
 	DEBUG_ASSERT( opt->row_delimitter != NULL );
@@ -410,12 +407,11 @@ void write_hex( memory_t* memory, file_t* outfile, options_t* opt )
  */
 void write_dec( memory_t* memory, file_t* outfile, options_t* opt )
 {
-	size_t i;
-	int j;
-	int data_len = opt->data_length;
+	size_t i, j;
+	size_t data_len = opt->data_length;
 	int64_t data;
 
-	//--- output address 
+	/*** output address ***/
 	if ( opt->show_address == true ) {
 		fprintf( outfile->ptr, "%08lx: ", (unsigned long)memory->address );
 	}
@@ -436,8 +432,8 @@ void write_dec( memory_t* memory, file_t* outfile, options_t* opt )
 			}
 		}
 		if ( opt->output_type == DECIMAL ) {
-			int s = ((int)sizeof(data) - data_len) * 8;
-			data = (data << s) >> s; //expanded zero
+			int s = ((int)sizeof(data) - (int)data_len) * 8;
+			data = (data << s) >> s; /* expanded zero */
 		}
 		(void)fprintf( outfile->ptr, opt->output_format, (long long int)data );
 	}
@@ -446,18 +442,18 @@ void write_dec( memory_t* memory, file_t* outfile, options_t* opt )
 
 void to_printable( memory_t* memory )
 {
-	int i;
+	size_t i;
 	for ( i = 0; i < memory->size; i++ )
 	{
 		if ( isprint( memory->data[i] ) == 0 ) {
-			memory->data[i] = '.';
+			memory->data[i] = (data_t) '.';
 		}
 	}
 }
 
-//##############################################################################
-// options
-//##############################################################################
+/***********
+ * options *
+ ***********/
 
 /*! 
  * @brief reset options.
@@ -532,13 +528,11 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 	int i;
 	size_t a; /* for macro */
 	char *sub;
-	uint64_t order = 0;
-	uint64_t order_length = 0;
 
 #define strlcmp(l,r) (strncmp(l,r,strlen(l)))
 #define ARG_FLAG(s) (strcmp(s,argv[i])==0)
-#define ARG_SPARAM(s) (strcmp(s,argv[i])==0 && (i+1) < argc && (sub=argv[++i]))
-#define ARG_LPARAM(s) (strlcmp(s,argv[i])==0 && (a=strlen(s))<strlen(argv[i]) && (sub=&argv[i][a]))
+#define ARG_SPARAM(s) (strcmp(s,argv[i])==0 && (i+1) < argc && ((sub=argv[++i])!=NULL))
+#define ARG_LPARAM(s) (strlcmp(s,argv[i])==0 && (a=strlen(s))<strlen(argv[i]) && ((sub=&argv[i][a])!=NULL))
 	for (i = 1; i < argc; i++) {
 		/* help */
 		if (ARG_FLAG("-?") || ARG_FLAG("-h") || ARG_FLAG("--help")) {
@@ -547,19 +541,19 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 
 		/* input */
 		} else if ( ARG_SPARAM("-s") || ARG_LPARAM("--start-address=") ) {
-			opt->start_address = strtoul( sub, NULL, 0 );
+			opt->start_address = (size_t)strtoul( sub, NULL, 0 );
 		} else if ( ARG_SPARAM("-e") || ARG_LPARAM("--end-address=") ) {
-			opt->end_address = strtoul( sub, NULL, 0 );
+			opt->end_address = (size_t)strtoul( sub, NULL, 0 );
 		} else if ( ARG_SPARAM("-S") || ARG_LPARAM("--search=") ) {
 			char fmt[64];
-			int length = strlen( sub );
+			size_t length = strlen( sub );
 			opt->search_pattern = (uint64_t) strtoull( sub, (char**)NULL, 16 );
 			if ( (length & 1) != 0 ) {
 				(void)verbose_printf( VERB_WARNING, "Warning: pattern should be byte align, append 4 bit for stuffing.\n" );
 				length++;
 				opt->search_pattern = opt->search_pattern << 4;
 			}
-			opt->search_length  = (long)length * 4uL; // number of bits
+			opt->search_length  = (int)(length * 4uL); /* number of bits */
 			/*@i@*/ sprintf( fmt, "bldump: set searching pattern - pat=0x%%0%dllx, size=%%ld \n", length );
 			(void)verbose_printf( VERB_LOG, fmt, opt->search_pattern, opt->search_length );
 
@@ -569,26 +563,26 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 				(void)verbose_printf( VERB_ERR, "Error: can't set opt -r and -l at once.\n" );
 				return false;
 			}
-			opt->data_length = (int)strtoul( sub, NULL, 0 );
+			opt->data_length = (size_t)strtoul( sub, NULL, 0 );
 		} else if ( ARG_SPARAM("-f") || ARG_LPARAM("--fields=") ) {
 			opt->data_fields= (int)strtoul( sub, NULL, 0 );
 		} else if ( ARG_SPARAM("-r") || ARG_LPARAM("--reorder=") ) {
 			uint64_t order;
-			int j, k;
+			size_t j, k;
 			if ( opt->data_length != 0 ) {
 				(void)verbose_printf( VERB_ERR, "Error: can't set opt -r and -l at once.\n" );
 				return false;
 			}
 			order            = (uint64_t) strtoull( sub, NULL, 16 );
-			opt->data_length = (int)strlen( sub );
+			opt->data_length = (size_t)strlen( sub );
 			if ( opt->data_length <= 1 || opt->data_length > 8 ) {
-				verbose_printf( VERB_ERR, "Error: order string is too long or <= 1 - len=%d\n", opt->data_length );
+				(void)verbose_printf( VERB_ERR, "Error: order string is too long or <= 1 - len=%d\n", opt->data_length );
 				return false;
 			}
 			for ( j=0, k=(opt->data_length*4)-4; j < opt->data_length; j++, k-=4 ) {
 				opt->data_order[j] = (int)((order >> k) & 0xFuLL);
-				if ( opt->data_order[j] >= opt->data_length ) {
-					verbose_printf( VERB_ERR, "Error: data reordering pattern is out of range - %x\n", opt->data_order[i] );
+				if ( opt->data_order[j] >= (int)opt->data_length ) {
+					(void)verbose_printf( VERB_ERR, "Error: data reordering pattern is out of range - %x\n", opt->data_order[i] );
 					return false;
 				}
 			}
@@ -665,9 +659,9 @@ bool options_load( options_t* opt, int argc, char* argv[] )
 	return true;
 }
 
-//##############################################################################
-// memory
-//##############################################################################
+/**********
+ * memory *
+ **********/
 
 /*!
  * @brief initialize memory_t.
@@ -751,9 +745,9 @@ bool memory_free( memory_t* memory )
 	return retval;
 }
 
-//##############################################################################
-// file
-//##############################################################################
+/********
+ * file *
+ ********/
 
 /*!
  * @brief reset parameter of file.
@@ -784,13 +778,13 @@ void file_reset( file_t* file )
 bool file_open( file_t* file, const char* name, const char* mode )
 {
 	/*** check parameter ***/
-	if ( name == NULL || strlen( name ) == 0 ) {
+	if ( name == NULL || strlen( name ) == 0 || mode == NULL ) {
 		return false;
 	}
 
 	/*** file open ***/
 	file->name = strclone( name );
-	file->ptr  = fopen( file->name, mode );
+	file->ptr  = fopen( name, mode );
 	if ( file->ptr == NULL ) {
 		return false;
 	}
@@ -804,7 +798,7 @@ bool file_open( file_t* file, const char* name, const char* mode )
 
 	(void)verbose_printf( VERB_LOG,
 		"bldump: open file - name=%s, ptr=0x%x, length=%d, pos=0x%x\n",
-		file->name,
+		(file->name == NULL) ? "(NULL)" : file->name,
 		file->ptr,
 		file->length,
 		file->position );
@@ -877,7 +871,7 @@ bool file_read( file_t* file, memory_t* memory, size_t nmemb )
 
 	if ( feof(file->ptr) == 1 ) {
 		is = true;
-	} else if ( nmemb <= 0 ) {
+	} else if ( nmemb == 0 ) {
 		is = false;
 	} else {
 		pos   = file->position;
@@ -923,8 +917,7 @@ void file_write( file_t* file, memory_t* memory )
  */
 bool file_search( file_t* file, memory_t* memory, options_t* opt )
 {
-	int i, j;
-	size_t m;
+	int i;
 	uint64_t mask = (uint64_t)((0x1uLL << opt->search_length) - 0x1uLL);
 	uint64_t read = 0;
 	int search_bytes = opt->search_length/8;
@@ -932,15 +925,15 @@ bool file_search( file_t* file, memory_t* memory, options_t* opt )
 	DEBUG_ASSERT( memory->size == 0 );
 	DEBUG_ASSERT( opt->search_length > 0 );
 
-	verbose_printf( VERB_TRACE, "bldump: file_search - mask=0x%llx pat=0x%llx\n",
+	(void)verbose_printf( VERB_TRACE, "bldump: file_search - mask=0x%llx pat=0x%llx\n",
 		mask, opt->search_pattern );
 
-	if ( feof(file->ptr) ) {
+	if ( feof(file->ptr) != 0 ) {
 		(void)verbose_printf( VERB_TRACE, "bldump: detected EOF on file searching.\n" );
 		return false;
 	}
 
-	// charge buffer.
+	/*** charge buffer ***/
 	for ( i = 0; i < search_bytes; i++ ) {
 		if ( (opt->end_address > 0) && (opt->end_address <= (size_t)ftell(file->ptr)) ) {
 			(void)verbose_printf( VERB_TRACE, "bldump: detected end address on file searching.\n" );
@@ -949,13 +942,13 @@ bool file_search( file_t* file, memory_t* memory, options_t* opt )
 
 		read = (read << 8) | ((uint8_t)fgetc(file->ptr));
 
-		if ( feof(file->ptr) ) {
+		if ( feof(file->ptr) != 0 ) {
 			(void)verbose_printf( VERB_TRACE, "bldump: detected EOF on file searching.\n" );
 			return false;
 		}
 	}
 
-	// search for pattern
+	/*** search for pattern ***/
 	while ( (read & mask) != opt->search_pattern ) {
 		if ( opt->end_address > 0 && opt->end_address <= (size_t)ftell(file->ptr) ) {
 			(void)verbose_printf( VERB_TRACE, "bldump: detected end address on file searching.\n" );
@@ -964,24 +957,24 @@ bool file_search( file_t* file, memory_t* memory, options_t* opt )
 
 		read = (read << 8) | ((uint8_t)fgetc(file->ptr));
 
-		if ( feof(file->ptr) ) {
+		if ( feof(file->ptr) != 0 ) {
 			(void)verbose_printf( VERB_TRACE, "bldump: detected EOF on file searching.\n" );
 			return false;
 		}
 	};
 
-	// read file and write to memory.
+	/*** read file and write to memory ***/
 	assert( (read & mask) == opt->search_pattern );
 
 	file->position  = (size_t) ftell(file->ptr);
 	memory->address = file->position - search_bytes;
 	
 	for ( i = search_bytes-1; i >= 0; i-- ) {
-		if ( i < memory->length ) {
+		if ( i < (int)memory->length ) {
 			memory->data[i] = (data_t)(opt->search_pattern >> (i*8));
 		}
 	}
-	memory->size = search_bytes;
+	memory->size = (size_t)search_bytes;
 
 	return true;
 }
@@ -989,30 +982,32 @@ bool file_search( file_t* file, memory_t* memory, options_t* opt )
 /*!
  * @brief display help message.
  */
-int help(void) //{{{
+int help(void) /*{{{*/
 {
 	int i, size;
 	size = (int)(sizeof(usage)/sizeof(const char*));
 	for( i=0; i<size; i++ ) fprintf(STDERR, "%s\n", usage[i] );
 	return EXIT_FAILURE;
 }
-//}}}
+/*}}}*/
 
 /*!
  * @brief clone string.
  * @param[in] str string to clone.
  * @retval string memory pointer that point new memory and set string same as 'str'.
  */
-char* strclone( const char* str ) //{{{
+char* strclone( const char* str ) /*{{{*/
 {
 	char* retval;
 	DEBUG_ASSERT( str != NULL );
 
 	retval = (char*)malloc( strlen(str)+1 );
-	strcpy( retval, str );
+	if ( retval != NULL ) {
+		strcpy( retval, str );
+	}
 	return retval;
 }
-//}}}
+/*}}}*/
 
 /*!
  * @brief free memory of string.
@@ -1020,9 +1015,9 @@ char* strclone( const char* str ) //{{{
  * @retval true success.
  * @retval false failure.
  */
-bool strfree( char* str ) //{{{
+bool strfree( char* str ) /*{{{*/
 {
-	bool retval = true;/*{{{*//*}}}*/
+	bool retval = true;
 	if ( str != NULL ) {
 		free( str );
 	} else {
@@ -1030,7 +1025,7 @@ bool strfree( char* str ) //{{{
 	}
 	return retval;
 }
-//}}}
+/*}}}*/
 
 
 /* vim:fdm=marker:
