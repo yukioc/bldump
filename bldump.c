@@ -917,7 +917,7 @@ void file_write( file_t* file, memory_t* memory )
  */
 bool file_search( file_t* file, memory_t* memory, options_t* opt )
 {
-	int i;
+	int i, j;
 	uint64_t mask = (uint64_t)((0x1uLL << opt->search_length) - 0x1uLL);
 	uint64_t read = 0;
 	int search_bytes = opt->search_length/8;
@@ -969,9 +969,9 @@ bool file_search( file_t* file, memory_t* memory, options_t* opt )
 	file->position  = (size_t) ftell(file->ptr);
 	memory->address = file->position - search_bytes;
 	
-	for ( i = search_bytes-1; i >= 0; i-- ) {
+	for ( j=0, i=search_bytes-1; i >= 0; i--, j++ ) {
 		if ( i < (int)memory->length ) {
-			memory->data[i] = (data_t)(opt->search_pattern >> (i*8));
+			memory->data[j] = (data_t)(opt->search_pattern >> (i*8));
 		}
 	}
 	memory->size = (size_t)search_bytes;
