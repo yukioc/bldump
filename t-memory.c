@@ -6,64 +6,31 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
-#include "CUnit/CUnit.h"
 
+#include "munit.h"
 #include "verbose.h"
 #include "bldump.h"
 
 extern FILE *t_stdin, *t_stdout, *t_stderr;
 
-static int ts_memory_init(void)
-{
-	if ( verbose_out != NULL ) {
-		fprintf( stderr, "Error: verbose_out is not NULL\n" );
-		return 1;
-	}
-
-	t_stdin  = tmpfile();
-	t_stdout = tmpfile();
-	t_stderr = tmpfile();
-	verbose_out = tmpfile();
-
-	if ( t_stdin == NULL || t_stdout == NULL || t_stderr == NULL ) {
-		fprintf( stderr, "Error: tmpfile() failure - errno = %d.\n", errno );
-		return 1;
-	}
-
-	return 0;
-}
-
-static int ts_memory_cleanup(void)
-{
-	fclose( t_stdin  );
-	fclose( t_stdout );
-	fclose( t_stderr );
-	t_stdin = NULL;
-	t_stdout = NULL;
-	t_stderr = NULL;
-	verbose_out = NULL;
-
-	return 0;
-}
-
 /*!
  * @brief test of memory_init.
  */
-static void tc_memory_init(void)
+static void t_memory_init(void)
 {
 	memory_t memory;
 	memset( &memory, 0xcc, sizeof(memory_t) );
 	memory_init( &memory );
-	CU_ASSERT_EQUAL(    memory.address,  0L );
-	CU_ASSERT_PTR_NULL( memory.data );
-	CU_ASSERT_EQUAL(    memory.length,   0L );
-	CU_ASSERT_EQUAL(    memory.size,     0L );
+	mu_assert_equal(    memory.address,  0L );
+	mu_assert_ptr_null( memory.data );
+	mu_assert_equal(    memory.length,   0L );
+	mu_assert_equal(    memory.size,     0L );
 }
 
 /*!
  * @brief test of memory_allocate.
  */
-static void tc_memory_allocate(void)
+static void t_memory_allocate(void)
 {
 	bool ret;
 	memory_t memory;
@@ -72,21 +39,21 @@ static void tc_memory_allocate(void)
 	/* memory_allocate() - failure (couldn't allocate) */
 	{
 		ret = memory_allocate( &memory, -1 );
-		CU_ASSERT_EQUAL( ret, false );
+		mu_assert_equal( ret, false );
 	}
 	/* memory_allocate() - suucess */
 	{
 		ret = memory_allocate( &memory, 10 );
-		CU_ASSERT_EQUAL( ret,            true );
-		CU_ASSERT_EQUAL( memory.address, 0L );
-		CU_ASSERT_PTR_NOT_NULL( memory.data );
-		CU_ASSERT_EQUAL( memory.length,  10 );
-		CU_ASSERT_EQUAL( memory.size,    0 );
+		mu_assert_equal( ret,            true );
+		mu_assert_equal( memory.address, 0L );
+		mu_assert_ptr_not_null( memory.data );
+		mu_assert_equal( memory.length,  10 );
+		mu_assert_equal( memory.size,    0 );
 	}
 	/* memory_allocate() - failure (re-allocated) */
 	{
 		ret = memory_allocate( &memory, 10 );
-		CU_ASSERT_EQUAL( ret, false );
+		mu_assert_equal( ret, false );
 	}
 
 	free( memory.data );
@@ -95,7 +62,7 @@ static void tc_memory_allocate(void)
 /*!
  * @brief test of memory_clear.
  */
-static void tc_memory_clear(void)
+static void t_memory_clear(void)
 {
 	memory_t memory;
 	memory_init( &memory );
@@ -104,10 +71,10 @@ static void tc_memory_clear(void)
 	memory.address = 2;
 	memory.size = 3;
 	memory_clear( &memory );
-	CU_ASSERT_PTR_NOT_NULL(  memory.data );
-	CU_ASSERT_NOT_EQUAL(     memory.length,  0 );
-	CU_ASSERT_EQUAL(         memory.address, 0L );
-	CU_ASSERT_EQUAL(         memory.size,    0L );
+	mu_assert_ptr_not_null(  memory.data );
+	mu_assert_not_equal(     memory.length,  0 );
+	mu_assert_equal(         memory.address, 0L );
+	mu_assert_equal(         memory.size,    0L );
 
 	free( memory.data );
 }
@@ -115,7 +82,7 @@ static void tc_memory_clear(void)
 /*!
  * @brief test of memory_free.
  */
-static void tc_memory_free(void)
+static void t_memory_free(void)
 {
 	bool ret;
 	memory_t memory;
@@ -125,32 +92,40 @@ static void tc_memory_free(void)
 	/* memory_free() - success */
 	{
 		ret = memory_free( &memory );
-		CU_ASSERT_EQUAL( ret,           true );
-		CU_ASSERT_PTR_NULL( memory.data );
-		CU_ASSERT_EQUAL( memory.length, 0L );
+		mu_assert_equal( ret,           true );
+		mu_assert_ptr_null( memory.data );
+		mu_assert_equal( memory.length, 0L );
 	}
 	/* memory_free() - failure */
 	{
 		ret = memory_free( &memory );
-		CU_ASSERT_EQUAL( ret, false );
+		mu_assert_equal( ret, false );
 	}
 }
 
-CU_ErrorCode ts_memory_regist(void)
+void ts_memory(void)
 {
-	CU_TestInfo ts_memory_cases[] = {
-		{ "memory_init()"     , tc_memory_init }     , 
-		{ "memory_allocate()" , tc_memory_allocate } , 
-		{ "memory_clear()"    , tc_memory_clear }    , 
-		{ "memory_free()"     , tc_memory_free }     , 
-		CU_TEST_INFO_NULL
-	};
+	/* init */
+	assert(verbose_out==NULL);//Error: verbose_out is not NULL
+	t_stdin  = tmpfile();
+	t_stdout = tmpfile();
+	t_stderr = tmpfile();
+	verbose_out = tmpfile();
+	assert(t_stdin!=NULL||t_stdout!=NULL||t_stderr!=NULL);//Error: tmpfile() failure
 
-	CU_SuiteInfo suites[] = {
-		{ "memory", ts_memory_init, ts_memory_cleanup, ts_memory_cases },
-		CU_SUITE_INFO_NULL
-	};
+	/* test */
+	mu_run_test(t_memory_init);
+	mu_run_test(t_memory_allocate);
+	mu_run_test(t_memory_clear);
+	mu_run_test(t_memory_free);
 
-	return CU_register_suites( suites );
+	/* cleanup */
+	fclose( t_stdin  );
+	fclose( t_stdout );
+	fclose( t_stderr );
+	t_stdin = NULL;
+	t_stdout = NULL;
+	t_stderr = NULL;
+	verbose_out = NULL;
 }
 

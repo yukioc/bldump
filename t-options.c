@@ -6,48 +6,15 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
-#include "CUnit/CUnit.h"
 
+#include "munit.h"
 #include "verbose.h"
 #include "bldump.h"
-
-static int ts_opt_init(void)
-{
-	if ( verbose_out != NULL ) {
-		fprintf( stderr, "Error: verbose_out is not NULL\n" );
-		return 1;
-	}
-
-	t_stdin  = tmpfile();
-	t_stdout = tmpfile();
-	t_stderr = tmpfile();
-	verbose_out = tmpfile();
-
-	if ( t_stdin == NULL || t_stdout == NULL || t_stderr == NULL ) {
-		fprintf( stderr, "Error: tmpfile() failure - errno = %d.\n", errno );
-		return 1;
-	}
-
-	return 0;
-}
-
-static int ts_opt_cleanup(void)
-{
-	fclose( t_stdin  );
-	fclose( t_stdout );
-	fclose( t_stderr );
-	t_stdin = NULL;
-	t_stdout = NULL;
-	t_stderr = NULL;
-	verbose_out = NULL;
-
-	return 0;
-}
 
 /*!
  * @biref test bldump::options_clear().
  */
-static void tc_options_clear(void)
+static void t_options_clear(void)
 {
 	bool is;
 	options_t opt;
@@ -59,11 +26,11 @@ static void tc_options_clear(void)
 	opt.col_delimitter = (char*)malloc(1);
 	opt.row_delimitter = (char*)malloc(1);
 	is = options_clear( &opt );
-	CU_ASSERT_EQUAL( is, true );
-	CU_ASSERT_PTR_NULL( opt.infile_name );
-	CU_ASSERT_PTR_NULL( opt.outfile_name );
-	CU_ASSERT_PTR_NULL( opt.col_delimitter );
-	CU_ASSERT_PTR_NULL( opt.row_delimitter );
+	mu_assert_equal( is, true );
+	mu_assert_ptr_null( opt.infile_name );
+	mu_assert_ptr_null( opt.outfile_name );
+	mu_assert_ptr_null( opt.col_delimitter );
+	mu_assert_ptr_null( opt.row_delimitter );
 
 	/* error */
 	opt.infile_name   = NULL;
@@ -71,11 +38,11 @@ static void tc_options_clear(void)
 	opt.col_delimitter = (char*)malloc(1);
 	opt.row_delimitter = (char*)malloc(1);
 	is = options_clear( &opt );
-	CU_ASSERT_EQUAL( is, false );
-	CU_ASSERT_PTR_NULL( opt.infile_name );
-	CU_ASSERT_PTR_NULL( opt.outfile_name );
-	CU_ASSERT_PTR_NULL( opt.col_delimitter );
-	CU_ASSERT_PTR_NULL( opt.row_delimitter );
+	mu_assert_equal( is, false );
+	mu_assert_ptr_null( opt.infile_name );
+	mu_assert_ptr_null( opt.outfile_name );
+	mu_assert_ptr_null( opt.col_delimitter );
+	mu_assert_ptr_null( opt.row_delimitter );
 
 	/* error */
 	opt.infile_name   = (char*)malloc(1);
@@ -83,11 +50,11 @@ static void tc_options_clear(void)
 	opt.col_delimitter = (char*)malloc(1);
 	opt.row_delimitter = (char*)malloc(1);
 	is = options_clear( &opt );
-	CU_ASSERT_EQUAL( is, false );
-	CU_ASSERT_PTR_NULL( opt.infile_name );
-	CU_ASSERT_PTR_NULL( opt.outfile_name );
-	CU_ASSERT_PTR_NULL( opt.col_delimitter );
-	CU_ASSERT_PTR_NULL( opt.row_delimitter );
+	mu_assert_equal( is, false );
+	mu_assert_ptr_null( opt.infile_name );
+	mu_assert_ptr_null( opt.outfile_name );
+	mu_assert_ptr_null( opt.col_delimitter );
+	mu_assert_ptr_null( opt.row_delimitter );
 
 	/* error */
 	opt.infile_name   = (char*)malloc(1);
@@ -95,11 +62,11 @@ static void tc_options_clear(void)
 	opt.col_delimitter = NULL;
 	opt.row_delimitter = (char*)malloc(1);
 	is = options_clear( &opt );
-	CU_ASSERT_EQUAL( is, false );
-	CU_ASSERT_PTR_NULL( opt.infile_name );
-	CU_ASSERT_PTR_NULL( opt.outfile_name );
-	CU_ASSERT_PTR_NULL( opt.col_delimitter );
-	CU_ASSERT_PTR_NULL( opt.row_delimitter );
+	mu_assert_equal( is, false );
+	mu_assert_ptr_null( opt.infile_name );
+	mu_assert_ptr_null( opt.outfile_name );
+	mu_assert_ptr_null( opt.col_delimitter );
+	mu_assert_ptr_null( opt.row_delimitter );
 
 	/* error */
 	opt.infile_name   = (char*)malloc(1);
@@ -107,43 +74,43 @@ static void tc_options_clear(void)
 	opt.col_delimitter = (char*)malloc(1);
 	opt.row_delimitter = NULL;
 	is = options_clear( &opt );
-	CU_ASSERT_EQUAL( is, false );
-	CU_ASSERT_PTR_NULL( opt.infile_name );
-	CU_ASSERT_PTR_NULL( opt.outfile_name );
-	CU_ASSERT_PTR_NULL( opt.col_delimitter );
-	CU_ASSERT_PTR_NULL( opt.row_delimitter );
+	mu_assert_equal( is, false );
+	mu_assert_ptr_null( opt.infile_name );
+	mu_assert_ptr_null( opt.outfile_name );
+	mu_assert_ptr_null( opt.col_delimitter );
+	mu_assert_ptr_null( opt.row_delimitter );
 }
 
 /*!
  * @biref test "bldump -".
  */
-static void tc_opt_noopt(void)
+static void t_opt_noopt(void)
 {
 	options_t opt;
 	bool is;
 	char* argv[] = { "bldump", "-" };
 	options_reset( &opt );
 	is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-	CU_ASSERT_EQUAL( is, false );
+	mu_assert_equal( is, false );
 }
 
 /*!
  * @biref test "bldump".
  */
-static void tc_opt_noarg(void)
+static void t_opt_noarg(void)
 {
 	options_t opt;
 	bool is;
 	char* argv[] = { "bldump" };
 	options_reset( &opt );
 	is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-	CU_ASSERT_EQUAL( is, false );
+	mu_assert_equal( is, false );
 }
 
 /*!
  * @biref test "bldump -h".
  */
-static void tc_opt_help(void)
+static void t_opt_help(void)
 {
 	options_t opt;
 	bool is;
@@ -153,28 +120,28 @@ static void tc_opt_help(void)
 		char* argv[] = { "bldump", "-h" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 	/* -? */
 	{
 		char* argv[] = { "bldump", "-?" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 	/* --help */
 	{
 		char* argv[] = { "bldump", "--help" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 }
 
 /*!
  * @brief test infile and outfile
  */
-static void tc_opt_infile_outfile(void)
+static void t_opt_infile_outfile(void)
 {
 	options_t opt;
 	bool is;
@@ -184,9 +151,9 @@ static void tc_opt_infile_outfile(void)
 		char* argv[] = { "bldump", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_STRING_EQUAL( opt.infile_name, "infile" );
-		CU_ASSERT_PTR_NULL( opt.outfile_name );
+		mu_assert_equal( is, true );
+		mu_assert_string_equal( opt.infile_name, "infile" );
+		mu_assert_ptr_null( opt.outfile_name );
 	}
 
 	/* infile outfile */
@@ -196,16 +163,16 @@ static void tc_opt_infile_outfile(void)
 		char* argv[] = { "bldump", "infile", "outfile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_STRING_EQUAL( opt.infile_name, "infile" );
-		CU_ASSERT_STRING_EQUAL( opt.outfile_name, "outfile" );
+		mu_assert_equal( is, true );
+		mu_assert_string_equal( opt.infile_name, "infile" );
+		mu_assert_string_equal( opt.outfile_name, "outfile" );
 	}
 }
 
 /*!
  * @brief test -l, --length
  */
-static void tc_opt_length(void)
+static void t_opt_length(void)
 {
 	options_t opt;
 	bool is;
@@ -215,9 +182,9 @@ static void tc_opt_length(void)
 		char* argv[] = { "bldump", "-l", "3", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.data_length, 3 );
-		CU_ASSERT_PTR_NULL( opt.outfile_name );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.data_length, 3 );
+		mu_assert_ptr_null( opt.outfile_name );
 	}
 
 	/* --length */
@@ -225,8 +192,8 @@ static void tc_opt_length(void)
 		char* argv[] = { "bldump", "--length=4", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.data_length, 4 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.data_length, 4 );
 	}
 
 	/* -l --length (error for conflict of other options) */
@@ -235,7 +202,7 @@ static void tc_opt_length(void)
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); /* duplicated option */
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 
 }
@@ -243,7 +210,7 @@ static void tc_opt_length(void)
 /*!
  * @brief test -f, --fields
  */
-static void tc_opt_fields(void)
+static void t_opt_fields(void)
 {
 	options_t opt;
 	bool is;
@@ -253,9 +220,9 @@ static void tc_opt_fields(void)
 		char* argv[] = { "bldump", "-f", "5", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.data_fields, 5 );
-		CU_ASSERT_PTR_NULL( opt.outfile_name );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.data_fields, 5 );
+		mu_assert_ptr_null( opt.outfile_name );
 	}
 
 	/* --fields */
@@ -263,15 +230,15 @@ static void tc_opt_fields(void)
 		char* argv[] = { "bldump", "--fields=6", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.data_fields, 6 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.data_fields, 6 );
 	}
 }
 
 /*!
  * @brief test -a, --show-address
  */
-static void tc_opt_address(void)
+static void t_opt_address(void)
 {
 	options_t opt;
 	bool is;
@@ -280,11 +247,11 @@ static void tc_opt_address(void)
 	{
 		char* argv[] = { "bldump", "-a", "infile" };
 		options_reset( &opt );
-		CU_ASSERT_EQUAL( opt.show_address, false );
+		mu_assert_equal( opt.show_address, false );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.show_address, true );
-		CU_ASSERT_PTR_NULL( opt.outfile_name );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.show_address, true );
+		mu_assert_ptr_null( opt.outfile_name );
 	}
 
 	/* --show_address */
@@ -292,15 +259,15 @@ static void tc_opt_address(void)
 		char* argv[] = { "bldump", "--show-address", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.show_address, true );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.show_address, true );
 	}
 }
 
 /*!
  * @brief test -s, --start-address
  */
-static void tc_opt_start(void)
+static void t_opt_start(void)
 {
 	options_t opt;
 	bool is;
@@ -309,10 +276,10 @@ static void tc_opt_start(void)
 	{
 		char* argv[] = { "bldump", "-s", "1", "infile" };
 		options_reset( &opt );
-		CU_ASSERT_EQUAL( opt.start_address, 0 );
+		mu_assert_equal( opt.start_address, 0 );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.start_address, 1 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.start_address, 1 );
 	}
 
 	/* --start_address */
@@ -320,15 +287,15 @@ static void tc_opt_start(void)
 		char* argv[] = { "bldump", "--start-address=2", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.start_address, 2 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.start_address, 2 );
 	}
 }
 
 /*!
  * @brief test -e, --end-address
  */
-static void tc_opt_end(void)
+static void t_opt_end(void)
 {
 	options_t opt;
 	bool is;
@@ -337,10 +304,10 @@ static void tc_opt_end(void)
 	{
 		char* argv[] = { "bldump", "-e", "1", "infile" };
 		options_reset( &opt );
-		CU_ASSERT_EQUAL( opt.end_address, 0 );
+		mu_assert_equal( opt.end_address, 0 );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.end_address, 1 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.end_address, 1 );
 	}
 
 	/* --end_address */
@@ -348,14 +315,14 @@ static void tc_opt_end(void)
 		char* argv[] = { "bldump", "--end-address=2", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.end_address, 2 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.end_address, 2 );
 	}
 }
 /*!
  * @brief test -v, --verbose
  */
-static void tc_opt_verbose(void)
+static void t_opt_verbose(void)
 {
 	options_t opt;
 	bool is;
@@ -365,8 +332,8 @@ static void tc_opt_verbose(void)
 		char* argv[] = { "bldump", "-v", "3" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, false );
-		CU_ASSERT_EQUAL( verbose_level, 3 );
+		mu_assert_equal( is, false );
+		mu_assert_equal( verbose_level, 3 );
 	}
 
 	/* --verboes */
@@ -374,15 +341,15 @@ static void tc_opt_verbose(void)
 		char* argv[] = { "bldump", "--verbose=4", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( verbose_level, 4 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( verbose_level, 4 );
 	}
 }
 
 /*!
  * @brief test -d, --delimitter
  */
-static void tc_opt_delimitter(void)
+static void t_opt_delimitter(void)
 {
 	options_t opt;
 	bool is;
@@ -392,8 +359,8 @@ static void tc_opt_delimitter(void)
 		char* argv[] = { "bldump", "-d", ",", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_STRING_EQUAL( opt.col_delimitter, "," );
+		mu_assert_equal( is, true );
+		mu_assert_string_equal( opt.col_delimitter, "," );
 	}
 
 	/* --delimitter */
@@ -401,15 +368,15 @@ static void tc_opt_delimitter(void)
 		char* argv[] = { "bldump", "--delimitter=\t", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_STRING_EQUAL( opt.col_delimitter, "\t" );
+		mu_assert_equal( is, true );
+		mu_assert_string_equal( opt.col_delimitter, "\t" );
 	}
 }
 
 /*!
  * @brief test -i, --decimal
  */
-static void tc_opt_dec(void)
+static void t_opt_dec(void)
 {
 	options_t opt;
 	bool is;
@@ -419,9 +386,9 @@ static void tc_opt_dec(void)
 		char* argv[] = { "bldump", "-i", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.output_type, DECIMAL );
-		CU_ASSERT_STRING_EQUAL( opt.output_format, "%lld" );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.output_type, DECIMAL );
+		mu_assert_string_equal( opt.output_format, "%lld" );
 	}
 
 	/* --decimal */
@@ -429,15 +396,15 @@ static void tc_opt_dec(void)
 		char* argv[] = { "bldump", "--decimal", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.output_type, DECIMAL );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.output_type, DECIMAL );
 	}
 }
 
 /*!
  * @brief test -u, --unsigned
  */
-static void tc_opt_udec(void)
+static void t_opt_udec(void)
 {
 	options_t opt;
 	bool is;
@@ -447,9 +414,9 @@ static void tc_opt_udec(void)
 		char* argv[] = { "bldump", "-u", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.output_type, UDECIMAL );
-		CU_ASSERT_STRING_EQUAL( opt.output_format, "%llu" );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.output_type, UDECIMAL );
+		mu_assert_string_equal( opt.output_format, "%llu" );
 	}
 
 	/* --unsigned */
@@ -457,15 +424,15 @@ static void tc_opt_udec(void)
 		char* argv[] = { "bldump", "--decimal", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.output_type, DECIMAL );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.output_type, DECIMAL );
 	}
 }
 
 /*!
  * @brief test -b, --binary
  */
-static void tc_opt_bin(void)
+static void t_opt_bin(void)
 {
 	options_t opt;
 	bool is;
@@ -475,8 +442,8 @@ static void tc_opt_bin(void)
 		char* argv[] = { "bldump", "-b", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.output_type, BINARY );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.output_type, BINARY );
 	}
 
 	/* --binary */
@@ -484,15 +451,15 @@ static void tc_opt_bin(void)
 		char* argv[] = { "bldump", "--binary", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.output_type, BINARY );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.output_type, BINARY );
 	}
 }
 
 /*!
  * @brief test -r, --reorder
  */
-static void tc_opt_reorder(void)
+static void t_opt_reorder(void)
 {
 	options_t opt;
 	bool is;
@@ -501,13 +468,13 @@ static void tc_opt_reorder(void)
 	{
 		char* argv[] = { "bldump", "-r", "10", "infile" };
 		options_reset( &opt );
-		CU_ASSERT_EQUAL( opt.data_order[0], -1 );
+		mu_assert_equal( opt.data_order[0], -1 );
 
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.data_length, 2 );
-		CU_ASSERT_EQUAL( opt.data_order[0], 1 );
-		CU_ASSERT_EQUAL( opt.data_order[1], 0 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.data_length, 2 );
+		mu_assert_equal( opt.data_order[0], 1 );
+		mu_assert_equal( opt.data_order[1], 0 );
 	}
 
 	/* --reoder */
@@ -515,11 +482,11 @@ static void tc_opt_reorder(void)
 		char* argv[] = { "bldump", "--reorder=012", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.data_length, 3 );
-		CU_ASSERT_EQUAL( opt.data_order[0], 0 );
-		CU_ASSERT_EQUAL( opt.data_order[1], 1 );
-		CU_ASSERT_EQUAL( opt.data_order[2], 2 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.data_length, 3 );
+		mu_assert_equal( opt.data_order[0], 0 );
+		mu_assert_equal( opt.data_order[1], 1 );
+		mu_assert_equal( opt.data_order[2], 2 );
 	}
 
 	/* -r 0 -r 0 (error) */
@@ -527,7 +494,7 @@ static void tc_opt_reorder(void)
 		char* argv[] = { "bldump", "-r", "10", "-r", "10", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 
 	/* -r 012345678 (error) */
@@ -535,7 +502,7 @@ static void tc_opt_reorder(void)
 		char* argv[] = { "bldump", "-r", "012345678", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 
 	/* -r 31 (error) */
@@ -543,14 +510,14 @@ static void tc_opt_reorder(void)
 		char* argv[] = { "bldump", "-r", "31", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 }
 
 /*!
  * @brief test -S, --search
  */
-static void tc_opt_search(void)
+static void t_opt_search(void)
 {
 	options_t opt;
 	bool is;
@@ -561,9 +528,9 @@ static void tc_opt_search(void)
 		options_reset( &opt );
 
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.search_pattern, 0x0123 );
-		CU_ASSERT_EQUAL( opt.search_length,  16 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.search_pattern, 0x0123 );
+		mu_assert_equal( opt.search_length,  16 );
 	}
 
 	/* --search */
@@ -571,9 +538,9 @@ static void tc_opt_search(void)
 		char* argv[] = { "bldump", "--search=234567", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( opt.search_pattern, 0x234567 );
-		CU_ASSERT_EQUAL( opt.search_length,  24 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( opt.search_pattern, 0x234567 );
+		mu_assert_equal( opt.search_length,  24 );
 	}
 
 	/* -S 1 (error) */
@@ -581,40 +548,48 @@ static void tc_opt_search(void)
 		char* argv[] = { "bldump", "-S", "1", "infile" };
 		options_reset( &opt );
 		is = options_load( &opt, (int)(sizeof(argv)/sizeof(char*)), argv ); 
-		CU_ASSERT_EQUAL( opt.search_pattern, 0x10 );
-		CU_ASSERT_EQUAL( opt.search_length,  8 );
+		mu_assert_equal( opt.search_pattern, 0x10 );
+		mu_assert_equal( opt.search_length,  8 );
 		//printf("search: len=%d, pat=%x\n", opt.search_length, opt.search_pattern );
 	}
 }
 
-CU_ErrorCode ts_opt_regist(void)
+void ts_opt(void)
 {
-	CU_TestInfo ts_opt_cases[] = {
-		{ "options_clear()", tc_options_clear },
-		{ "options_load( bldump )", tc_opt_noarg },
-		{ "options_load( bldump - )", tc_opt_noopt },
-		{ "options_load( bldump -h|-?|--help )", tc_opt_help },
-		{ "options_load( bldump infile outfile )", tc_opt_infile_outfile },
-		{ "options_load( bldump -l|--length infile )", tc_opt_length },
-		{ "options_load( bldump -f|--fields infile )", tc_opt_fields },
-		{ "options_load( bldump -a|--show-address )", tc_opt_address },
-		{ "options_load( bldump -s|--start-address )", tc_opt_start },
-		{ "options_load( bldump -v|--verbose )", tc_opt_verbose },
-		{ "options_load( bldump -d|--delimitter )", tc_opt_delimitter },
-		{ "options_load( bldump -i|--decimal )", tc_opt_dec },
-		{ "options_load( bldump -u|--unsigned)", tc_opt_udec },
-		{ "options_load( bldump -b|--binary)", tc_opt_bin },
-		{ "options_load( bldump -e|--end-address)", tc_opt_end },
-		{ "options_load( bldump -r|--reorder)", tc_opt_reorder },
-		{ "options_load( bldump -S|--search)", tc_opt_search },
-		CU_TEST_INFO_NULL
-	};
+	/* init */
+	assert(verbose_out==NULL); //Error: verbose_out is not NULL
+	t_stdin  = tmpfile();
+	t_stdout = tmpfile();
+	t_stderr = tmpfile();
+	verbose_out = tmpfile();
+	assert(t_stdin!=NULL||t_stdout!=NULL||t_stderr!=NULL);//Error: tmpfile() failure
+	
+	/* test */
+	mu_run_test(t_options_clear);
+	mu_run_test(t_opt_noarg);          //options_load( bldump )
+	mu_run_test(t_opt_noopt);          //options_load( bldump - )
+	mu_run_test(t_opt_help);           //options_load( bldump -h|-?|--help )
+	mu_run_test(t_opt_infile_outfile); //options_load( bldump infile outfile )
+	mu_run_test(t_opt_length);         //options_load( bldump -l|--length infile )
+	mu_run_test(t_opt_fields);         //options_load( bldump -f|--fields infile )
+	mu_run_test(t_opt_address);        //options_load( bldump -a|--show-address )
+	mu_run_test(t_opt_start);          //options_load( bldump -s|--start-address )
+	mu_run_test(t_opt_verbose);        //options_load( bldump -v|--verbose )
+	mu_run_test(t_opt_delimitter);     //options_load( bldump -d|--delimitter )
+	mu_run_test(t_opt_dec);            //options_load( bldump -i|--decimal )
+	mu_run_test(t_opt_udec);           //options_load( bldump -u|--unsigned)
+	mu_run_test(t_opt_bin);            //options_load( bldump -b|--binary)
+	mu_run_test(t_opt_end);            //options_load( bldump -e|--end-address)
+	mu_run_test(t_opt_reorder);        //options_load( bldump -r|--reorder)
+	mu_run_test(t_opt_search);         //options_load( bldump -S|--search)
 
-	CU_SuiteInfo suites[] = {
-		{ "options", ts_opt_init, ts_opt_cleanup, ts_opt_cases },
-		CU_SUITE_INFO_NULL
-	};
-
-	return CU_register_suites( suites );
+	/* cleanup */
+	fclose( t_stdin  );
+	fclose( t_stdout );
+	fclose( t_stderr );
+	t_stdin = NULL;
+	t_stdout = NULL;
+	t_stderr = NULL;
+	verbose_out = NULL;
 }
 

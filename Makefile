@@ -1,42 +1,43 @@
 # Makefile of bldump
-#
-# $Id$
-#
 
-#### CONFIGURE
+TEST:=0
+
+#### FILE
 APP_EXE		:= bldump
 APP_SRC		:= bldump.c verbose.c
 APP_VER		:= $(shell git describe)
 TEST_EXE	:= $(APP_EXE)-test
 TEST_SRC	:= $(wildcard t-*.c)
-TEST_LIB	:= cunit
 DOXYGEN_CFG	:= bldump.dox
-CUNIT_DIR	:= ./CUnit
-CUNIT_VER	:= CUnit-2.1-0
 ALL_SRC		:= $(APP_SRC) $(TEST_SRC)
 
+##### PATH
+#VPATH	:= 
+
+##### COMMAND
+CC			:=gcc
+
+CFLAGS		:=-O3
+#CFLAGS		+=-g
+CPPFLAGS	+=-Wall -Wextra
+INCLUDES	:=-I.
+
+##### OPTIONAL
 ifdef COMSPEC
 APP_EXE		:=$(APP_EXE:%=%.exe)
 TEST_EXE	:=$(TEST_EXE:%=%.exe)
-endif
-
-VPATH	:= ${CUNIT_DIR}
-
-##### COMMAND
-CC			=gcc
-CPPFLAGS	=-O3 -DVERSION="\"${APP_VER}\""
-SC_INCDIR	=-I.
-
-ifdef COMSPEC
-  CFLAGS =-mno-cygwin
-else
-  CFLAGS =
-  #CFLAGS =-g
-endif
-
 # CC		= cl
+CFLAGS		:=-mno-cygwin
 # LXFLAGS	= /nologo /W3
 # CPPFLAGS	= /nologo /GX /W3
+endif
+ifdef APP_VER
+CPPFLAGS	+=-DVERSION="\"${APP_VER}\""
+endif
+ifeq ($(TEST),1)
+CFLAGS		+=-g
+CFLAGS		+=-DTEST -ftest-coverage -fprofile-arcs
+endif
 
 ##### TARGET
 .PHONEY: all
@@ -46,42 +47,41 @@ all: depend $(APP_EXE)
 clean:
 	rm -f *.o
 	rm -f *.gcov *.gcda *.gcno
-	rm -f $(CUNIT_VER)-src.tar.gz
 
 .PHONEY: test
-test: clean depend libcunit.a
-	make $(TEST_EXE) CFLAGS="$(CFLAGS) -DCUNIT -ftest-coverage -fprofile-arcs"
+test: clean depend tp gcov
+
+.PHONEY: tp
+tp:
 	@echo "### cunit"
+	make $(TEST_EXE) TEST=1
 	./$(TEST_EXE) --test
+
+.PHONY: gcov
+gcov:
 	@echo "### gcov"
-	gcov $(APP_SRC)
+	@gcov $(APP_SRC) | \
+	grep -v creating | \
+	perl -pe 's/File .([\S]+).\n/\1 /; s/Lines \w+:(.+)\n/\1/;' | \
+	grep -v -E "(^/usr|^t_/)" | \
+	perl -ne 'printf "%20s %7s %s %3s\n", split;'
 
 PHONEY: depend
 depend: .depend
 
 .depend : $(SRC_ALL)
 	@echo "### depend"
-	${CXX} ${CFLAGS} ${SC_INCDIR} -MM $^ > $@
+	${CXX} ${CFLAGS} ${INCLUDES} -MM $^ > $@
 
 include .depend
 
 $(APP_EXE) : $(APP_SRC:%.c=%.o) 
 	@echo "### $@ ###"
-	${CC} ${CFLAGS} ${SC_INCDIR} -o $@ $^
+	${CC} ${CFLAGS} ${INCLUDES} -o $@ $^
 
 $(TEST_EXE) : $(APP_SRC:%.c=%.o) $(TEST_SRC:%.c=%.o)
 	@echo "### $@ ###"
-	${CC} ${CFLAGS} ${SC_INCDIR} -L${CUNIT_DIR} -o $@ $^ -lcunit
-
-libcunit.a :
-	@echo "### $@ ###"
-	wget http://sourceforge.net/projects/cunit/files/CUnit/2.1-0/$(CUNIT_VER)-src.tar.gz/download
-	tar xfz $(CUNIT_VER)-src.tar.gz
-	cd $(CUNIT_VER) && sh ./configure && $(MAKE) MAKEFLAGS=
-	cp -r $(CUNIT_VER)/CUnit/Headers ${CUNIT_DIR}
-	cp $(CUNIT_VER)/CUnit/Sources/.libs/libcunit.a  ${CUNIT_DIR}/
-	rm $(CUNIT_VER)-src.tar.gz
-	rm -r $(CUNIT_VER)
+	${CC} ${CFLAGS} ${INCLUDES} -o $@ $^
 
 .PHONEY: doxygen
 doxygen:
@@ -114,9 +114,9 @@ splint:
 
 .o.exe:
 	@echo "### $@ ###"
-	${CC} ${CFLAGS} ${SC_INCDIR} -o $@ $^
+	@${CC} ${CFLAGS} ${INCLUDES} -o $@ $^
 
 .c.o:
 	@echo "### $@ ###"
-	${CC} ${CFLAGS} ${SC_INCDIR} ${CPPFLAGS} -o $@ -x c -c $< 
+	@${CC} ${CFLAGS} ${INCLUDES} ${CPPFLAGS} -o $@ -x c -c $< 
 

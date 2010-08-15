@@ -102,8 +102,7 @@ EXAMPLES
 INSTALLATION
 
   type 'make test' to run unit tests.
-  This command-target require gcc, gcov and CUnit library.  But CUnit library is
-  builded in this make. If results of unit test have any failures, you shouldnot
+  If results of unit test have any failures, you shouldnot
   use bldump in this version.
 
   type 'make clean all' to build 'bldump'.

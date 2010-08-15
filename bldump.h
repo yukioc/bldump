@@ -99,7 +99,7 @@ bool file_search( file_t* file, memory_t* memory, options_t* opt );
 /*@null@*/ char* strclone( const char* str );
 bool strfree( char* str );
 
-#ifdef CUNIT
+#ifdef TEST
 extern FILE *t_stdin, *t_stdout, *t_stderr;
 extern char* t_tmpname;
 #endif

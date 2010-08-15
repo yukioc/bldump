@@ -12,12 +12,13 @@
 #include <stdint.h>
 #include <assert.h>
 #include <limits.h>
-#ifdef CUNIT
-#include "CUnit/Basic.h"
-#endif
+#include <ctype.h>
 
 #include "verbose.h"
 #include "bldump.h"
+#ifdef TEST
+#include "munit.h"
+#endif
 
 /*** interface ***/
 #ifndef VERSION
@@ -25,7 +26,7 @@
 #endif
 #define BUILD   __DATE__
 
-const static char *usage[] = {
+static const char *usage[] = {
 	"Usage: bldump [<options>] [<infile> [<outfile>]]",
 	"",
 	"  <infile>",
@@ -89,7 +90,7 @@ const static char *usage[] = {
 };
 
 /*** ifdef ***/
-#ifdef CUNIT
+#ifdef TEST
 #define DEBUG_ASSERT(c)		assert(c)
 #else
 #define DEBUG_ASSERT(c)
@@ -102,12 +103,15 @@ const static char *usage[] = {
 #define die verbose_die
 #define min(a,b) ((a)>(b)?(b):(a))
 
-/*** CUnit ***/
-#ifdef CUNIT
+/*** TEST ***/
+#ifdef TEST
 #define STDIN	t_stdin
 #define STDOUT	t_stdout
 #define STDERR	t_stderr
 #define EXIT	t_exit
+int mu_nfail=0;
+int mu_ntest=0;
+int mu_nassert=0;
 #else
 #define STDIN	stdin
 #define STDOUT	stdout
@@ -132,30 +136,23 @@ int main( int argc, char* argv[] )
 		fprintf( (STDOUT)?STDOUT:stdout, "bldump version %s (%s)\n", VERSION, BUILD );
 		return 0;
 	}
-#ifdef CUNIT
+#ifdef TEST
 	/* run test */
 	if ( argc == 2 && strcmp("--test", argv[1]) == 0  ) {
-		unsigned int fails = 0;
-		extern CU_ErrorCode ts_verbose_regist(void);
-		extern CU_ErrorCode ts_opt_regist(void);
-		extern CU_ErrorCode ts_memory_regist(void);
-		extern CU_ErrorCode ts_file_regist(void);
-		extern CU_ErrorCode ts_bldump_regist(void);
-		extern CU_ErrorCode ts_main_regist(void);
-		CU_ErrorCode cue;
-		cue = CU_initialize_registry();
-		if ( cue == CUE_SUCCESS ) cue = ts_verbose_regist();
-		if ( cue == CUE_SUCCESS ) cue = ts_opt_regist();
-		if ( cue == CUE_SUCCESS ) cue = ts_memory_regist();
-		if ( cue == CUE_SUCCESS ) cue = ts_file_regist();
-		if ( cue == CUE_SUCCESS ) cue = ts_bldump_regist();
-		if ( cue == CUE_SUCCESS ) cue = ts_main_regist();
-		/* use CUnit Basic I/F */
-		CU_basic_set_mode(CU_BRM_VERBOSE);
-		CU_basic_run_tests();
-		fails = CU_get_number_of_failures();
-		CU_cleanup_registry();
-		return (fails != 0) ? 1 : CU_get_error();
+		extern void ts_verbose(void);
+		extern void ts_opt(void);
+		extern void ts_memory(void);
+		extern void ts_file(void);
+		extern void ts_bldump(void);
+		extern void ts_main(void);
+		ts_verbose();
+		ts_opt();
+		ts_memory();
+		ts_file();
+		ts_bldump();
+		ts_main();
+		mu_show_failures();
+		return mu_nfail;
 	}
 	assert( t_stdin != NULL && t_stdout != NULL && t_stderr != NULL );
 #endif

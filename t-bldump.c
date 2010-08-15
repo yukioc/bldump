@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
-#include "CUnit/CUnit.h"
 
+#include "munit.h"
 #include "verbose.h"
 #include "bldump.h"
 
@@ -15,43 +15,10 @@ FILE *t_stdin, *t_stdout, *t_stderr;
 char* t_tmpname  = "t-bldump.tmp" ;
 char* t_tmpname2 = "t-bldump2.tmp" ;
 
-static int ts_bldump_init(void)
-{
-	if ( verbose_out != NULL ) {
-		fprintf( stderr, "Error: verbose_out is not NULL\n" );
-		return 1;
-	}
-
-	t_stdin  = tmpfile();
-	t_stdout = tmpfile();
-	t_stderr = tmpfile();
-	verbose_out = tmpfile();
-
-	if ( t_stdin == NULL || t_stdout == NULL || t_stderr == NULL ) {
-		fprintf( stderr, "Error: tmpfile() failure - errno = %d.\n", errno );
-		return 1;
-	}
-
-	return 0;
-}
-
-static int ts_bldump_cleanup(void)
-{
-	(void) fclose( t_stdin  );
-	(void) fclose( t_stdout );
-	(void) fclose( t_stderr );
-	t_stdin = NULL;
-	t_stdout = NULL;
-	t_stderr = NULL;
-	verbose_out = NULL;
-
-	return 0;
-}
-
 /*!
  * @brief test bldump::help().
  */
-static void tc_help(void)
+static void t_help(void)
 {
 	/* help() function */
 	long pos1, pos2;
@@ -60,14 +27,14 @@ static void tc_help(void)
 	ret=help();
 	pos2 = ftell(t_stderr);
 
-	CU_ASSERT_EQUAL( ret, EXIT_FAILURE );
-	CU_ASSERT(pos2 - pos1 > 0); /* count of the help message */
+	mu_assert_equal( ret, EXIT_FAILURE );
+	mu_assert(pos2 - pos1 > 0); /* count of the help message */
 }
 
 /*!
  * @brief test bldump::strfree().
  */
-static void tc_strfree(void)
+static void t_strfree(void)
 {
 	char* s;
 	bool is;
@@ -75,18 +42,18 @@ static void tc_strfree(void)
 	/* allocated memory */
 	s = (char*)malloc(1);
 	is = strfree(s);
-	CU_ASSERT_EQUAL( is, true );
+	mu_assert_equal( is, true );
 
 	/* NULL */ 
 	s = NULL;
 	is = strfree(s);
-	CU_ASSERT_EQUAL( is, false );
+	mu_assert_equal( is, false );
 }
 
 /*!
  * @brief test bldump::bldump_setup().
  */
-static void tc_bldump_setup(void)
+static void t_bldump_setup(void)
 {
 	int is;
 	memory_t  memory;
@@ -115,8 +82,8 @@ static void tc_bldump_setup(void)
 	{
 		opt.infile_name = tmpnam(NULL); /* not exist */
 		is = bldump_setup( &memory, &infile, &outfile, &opt );
-		CU_ASSERT_EQUAL( is, false );
-		CU_ASSERT_PTR_NULL( infile.ptr );
+		mu_assert_equal( is, false );
+		mu_assert_ptr_null( infile.ptr );
 	}
 
 	/* infile=exist, outfile=NULL(stdout) */
@@ -124,10 +91,10 @@ static void tc_bldump_setup(void)
 		opt.infile_name  = t_tmpname;
 		opt.outfile_name = NULL;
 		is = bldump_setup( &memory, &infile, &outfile, &opt );
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_PTR_NOT_NULL( infile.ptr );
-		CU_ASSERT_EQUAL( outfile.ptr, t_stdout  );
-		CU_ASSERT_PTR_NOT_NULL( memory.data );
+		mu_assert_equal( is, true );
+		mu_assert_ptr_not_null( infile.ptr );
+		mu_assert_equal( outfile.ptr, t_stdout  );
+		mu_assert_ptr_not_null( memory.data );
 		(void) file_close( &infile );
 		(void) file_close( &outfile );
 		(void) memory_free( &memory );
@@ -138,8 +105,8 @@ static void tc_bldump_setup(void)
 		opt.infile_name  = t_tmpname;
 		opt.outfile_name = "" ;
 		is = bldump_setup( &memory, &infile, &outfile, &opt );
-		CU_ASSERT_EQUAL( is, false );
-		CU_ASSERT_PTR_NULL( outfile.ptr );
+		mu_assert_equal( is, false );
+		mu_assert_ptr_null( outfile.ptr );
 		(void) file_close( &infile );
 	}
 
@@ -148,9 +115,9 @@ static void tc_bldump_setup(void)
 		opt.infile_name  = t_tmpname;
 		opt.outfile_name = t_tmpname2;
 		is = bldump_setup( &memory, &infile, &outfile, &opt );
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_PTR_NOT_NULL( infile.ptr );
-		CU_ASSERT_PTR_NOT_NULL( outfile.ptr );
+		mu_assert_equal( is, true );
+		mu_assert_ptr_not_null( infile.ptr );
+		mu_assert_ptr_not_null( outfile.ptr );
 		(void) file_close( &infile );
 		(void) file_close( &outfile );
 		(void) memory_free( &memory );
@@ -162,11 +129,11 @@ static void tc_bldump_setup(void)
 		opt.outfile_name = NULL;
 		opt.start_address = 1;
 		is = bldump_setup( &memory, &infile, &outfile, &opt );
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_PTR_NOT_NULL( infile.ptr );
-		CU_ASSERT_EQUAL( infile.position, 1 );
-		CU_ASSERT_EQUAL( outfile.ptr, t_stdout  );
-		CU_ASSERT_PTR_NOT_NULL( memory.data );
+		mu_assert_equal( is, true );
+		mu_assert_ptr_not_null( infile.ptr );
+		mu_assert_equal( infile.position, 1 );
+		mu_assert_equal( outfile.ptr, t_stdout  );
+		mu_assert_ptr_not_null( memory.data );
 		(void) file_close( &infile );
 		(void) file_close( &outfile );
 		(void) memory_free( &memory );
@@ -179,10 +146,10 @@ static void tc_bldump_setup(void)
 	{
 		opt.data_length = 0;
 		is = bldump_setup( &memory, &infile, &outfile, &opt );
-		CU_ASSERT_EQUAL( is, false );
-		CU_ASSERT_PTR_NOT_NULL( infile.ptr );
-		CU_ASSERT_PTR_NOT_NULL( outfile.ptr );
-		CU_ASSERT_PTR_NULL( memory.data );
+		mu_assert_equal( is, false );
+		mu_assert_ptr_not_null( infile.ptr );
+		mu_assert_ptr_not_null( outfile.ptr );
+		mu_assert_ptr_null( memory.data );
 		(void) file_close( &infile );
 		(void) file_close( &outfile );
 		opt.data_length = 1;
@@ -192,10 +159,10 @@ static void tc_bldump_setup(void)
 	{
 		opt.data_fields = 0;
 		is = bldump_setup( &memory, &infile, &outfile, &opt );
-		CU_ASSERT_EQUAL( is, false );
-		CU_ASSERT_PTR_NOT_NULL( infile.ptr );
-		CU_ASSERT_PTR_NOT_NULL( outfile.ptr );
-		CU_ASSERT_PTR_NULL( memory.data );
+		mu_assert_equal( is, false );
+		mu_assert_ptr_not_null( infile.ptr );
+		mu_assert_ptr_not_null( outfile.ptr );
+		mu_assert_ptr_null( memory.data );
 		(void) file_close( &infile );
 		(void) file_close( &outfile );
 		opt.data_fields = 16;
@@ -214,7 +181,7 @@ static void tc_bldump_setup(void)
 /*!
  * @brief test of bldump_read().
  */
-static void tc_bldump_read(void)
+static void t_bldump_read(void)
 {
 	bool is;
 	options_t opt;
@@ -234,7 +201,7 @@ static void tc_bldump_read(void)
 
 		(void)file_open( &infile, t_tmpname, "rt" );
 		is = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( is, true );
+		mu_assert_equal( is, true );
 
 		(void)file_close( &infile );
 	}
@@ -253,23 +220,23 @@ static void tc_bldump_read(void)
 
 		/* 1 */
 		is = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( is,             true );
-		CU_ASSERT_EQUAL( memory.size,    30 );
-		CU_ASSERT_EQUAL( memory.address, 0 );
-		CU_ASSERT_NSTRING_EQUAL( memory.data, "The quick brown fox jumps over", 30 );
+		mu_assert_equal( is,             true );
+		mu_assert_equal( memory.size,    30 );
+		mu_assert_equal( memory.address, 0 );
+		mu_assert_nstring_equal( memory.data, "The quick brown fox jumps over", 30 );
 
 		/* 2 */
 		is = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( is,             true );
-		CU_ASSERT_EQUAL( memory.size,    13 ); /* size is limited by file size */
-		CU_ASSERT_EQUAL( memory.address, 30 );
-		CU_ASSERT_NSTRING_EQUAL( memory.data, " the lazy dog", 13 ); /* notice: */
+		mu_assert_equal( is,             true );
+		mu_assert_equal( memory.size,    13 ); /* size is limited by file size */
+		mu_assert_equal( memory.address, 30 );
+		mu_assert_nstring_equal( memory.data, " the lazy dog", 13 ); /* notice: */
 
 		/* 3 */
 		is = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( is,             true );
-		CU_ASSERT_EQUAL( memory.size,    0 );
-		CU_ASSERT_EQUAL( memory.address, 0 );
+		mu_assert_equal( is,             true );
+		mu_assert_equal( memory.size,    0 );
+		mu_assert_equal( memory.address, 0 );
 
 		(void)file_close( &infile );
 	}
@@ -281,17 +248,17 @@ static void tc_bldump_read(void)
 		opt.end_address = 34;
 
 		is = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( memory.size, 30 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( memory.size, 30 );
 
 		is = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( memory.size, 4 );
-		CU_ASSERT_NSTRING_EQUAL( memory.data, " the", 4 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( memory.size, 4 );
+		mu_assert_nstring_equal( memory.data, " the", 4 );
 
 		is = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( is, false );
-		CU_ASSERT_EQUAL( memory.size, 0 );
+		mu_assert_equal( is, false );
+		mu_assert_equal( memory.size, 0 );
 
 		(void)file_close( &infile );
 	}
@@ -304,7 +271,7 @@ static void tc_bldump_read(void)
 /*!
  * @brief test of HEXADECIMAL format of bldump_write().
  */
-static void tc_bldump_hexadecimal(void)
+static void t_bldump_hexadecimal(void)
 {
 	file_t outfile;
 	memory_t memory;
@@ -337,8 +304,8 @@ static void tc_bldump_hexadecimal(void)
 
 		in = fopen( t_tmpname, "rb" );
 		reads = fread( buf, 1, 100, in );
-		CU_ASSERT_EQUAL( reads, 48 );
-		CU_ASSERT_NSTRING_EQUAL( buf, "30,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46\n", 48 );
+		mu_assert_equal( reads, 48 );
+		mu_assert_nstring_equal( buf, "30,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46\n", 48 );
 	}
 
 	/* 303132-333435- .. 434445-46 */
@@ -359,15 +326,15 @@ static void tc_bldump_hexadecimal(void)
 
 		in = fopen( t_tmpname, "rb" );
 		reads = fread( buf, 1, 100, in );
-		CU_ASSERT_EQUAL( reads, 46 );
-		CU_ASSERT_NSTRING_EQUAL( buf, "aaaa5555: 3031323334-3536373839-4142434445-46\n", 46 );
+		mu_assert_equal( reads, 46 );
+		mu_assert_nstring_equal( buf, "aaaa5555: 3031323334-3536373839-4142434445-46\n", 46 );
 	}
 }
 
 /*!
  * @brief test of DECIMAL format of bldump_write().
  */
-static void tc_bldump_decimal(void)
+static void t_bldump_decimal(void)
 {
 	int i;
 	file_t outfile;
@@ -404,8 +371,8 @@ static void tc_bldump_decimal(void)
 
 		in = fopen( t_tmpname, "rb" );
 		reads = fread( buf, 1, 100, in );
-		CU_ASSERT_EQUAL( reads, 56 );
-		CU_ASSERT_NSTRING_EQUAL( buf, "1,2,3,4,5,6,7,8,-127,-126,-125,-124,-123,-122,-121,-120\n", 56 );
+		mu_assert_equal( reads, 56 );
+		mu_assert_nstring_equal( buf, "1,2,3,4,5,6,7,8,-127,-126,-125,-124,-123,-122,-121,-120\n", 56 );
 		//printf( "reads=%d buf=%s\n", reads, buf );
 	}
 
@@ -429,8 +396,8 @@ static void tc_bldump_decimal(void)
 
 		in = fopen( t_tmpname, "rb" );
 		reads = fread( buf, 1, 100, in );
-		CU_ASSERT_EQUAL( reads, 49 );
-		CU_ASSERT_NSTRING_EQUAL( buf, "aaaa5555: 72623859790382856 -9114578090645354616\n", 49 );
+		mu_assert_equal( reads, 49 );
+		mu_assert_nstring_equal( buf, "aaaa5555: 72623859790382856 -9114578090645354616\n", 49 );
 		//printf( "reads=%d buf=%s\n", reads, buf );
 	}
 }
@@ -438,7 +405,7 @@ static void tc_bldump_decimal(void)
 /*!
  * @brief test of unsigned decimal format of bldump_write().
  */
-static void tc_bldump_udecimal(void)
+static void t_bldump_udecimal(void)
 {
 	int i;
 	file_t outfile;
@@ -475,8 +442,8 @@ static void tc_bldump_udecimal(void)
 
 		in = fopen( t_tmpname, "rb" );
 		reads = fread( buf, 1, 100, in );
-		CU_ASSERT_EQUAL( reads, 48 );
-		CU_ASSERT_NSTRING_EQUAL( buf, "1,2,3,4,5,6,7,8,129,130,131,132,133,134,135,136\n", 48 );
+		mu_assert_equal( reads, 48 );
+		mu_assert_nstring_equal( buf, "1,2,3,4,5,6,7,8,129,130,131,132,133,134,135,136\n", 48 );
 		//printf( "reads=%d buf=%s\n", reads, buf );
 	}
 
@@ -498,8 +465,8 @@ static void tc_bldump_udecimal(void)
 
 		in = fopen( t_tmpname, "rb" );
 		reads = fread( buf, 1, 100, in );
-		CU_ASSERT_EQUAL( reads, 38 );
-		CU_ASSERT_NSTRING_EQUAL( buf, "72623859790382856 9332165983064197000\n", 38 );
+		mu_assert_equal( reads, 38 );
+		mu_assert_nstring_equal( buf, "72623859790382856 9332165983064197000\n", 38 );
 		//printf( "reads=%d buf=%s\n", reads, buf );
 	}
 }
@@ -507,7 +474,7 @@ static void tc_bldump_udecimal(void)
 /*!
  * @brief test of BINARY format of bldump_write().
  */
-static void tc_bldump_binary(void)
+static void t_bldump_binary(void)
 {
 	int i;
 	file_t outfile;
@@ -537,10 +504,10 @@ static void tc_bldump_binary(void)
 
 		in = fopen( t_tmpname, "rb" );
 		reads = fread( buf, 1, 100, in );
-		CU_ASSERT_EQUAL( reads, 3 );
-		CU_ASSERT_EQUAL( buf[0], 0x01 );
-		CU_ASSERT_EQUAL( buf[1], 0x02 );
-		CU_ASSERT_EQUAL( buf[2], 0x03 );
+		mu_assert_equal( reads, 3 );
+		mu_assert_equal( buf[0], 0x01 );
+		mu_assert_equal( buf[1], 0x02 );
+		mu_assert_equal( buf[2], 0x03 );
 		//printf( "reads=%d buf=%s", reads, buf );
 	}
 }
@@ -548,7 +515,7 @@ static void tc_bldump_binary(void)
 /*!
  * @brief test of reordering of bldump_read().
  */
-static void tc_bldump_reorder(void)
+static void t_bldump_reorder(void)
 {
 	bool is;
 	file_t infile;
@@ -579,15 +546,15 @@ static void tc_bldump_reorder(void)
 		opt.data_length   = 3;
 
 		is = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( memory.size, 5 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( memory.size, 5 );
 		/* 80,81,82 -> 82,81,80 */
-		CU_ASSERT_EQUAL( memory.data[0], 0x82 );
-		CU_ASSERT_EQUAL( memory.data[1], 0x81 );
-		CU_ASSERT_EQUAL( memory.data[2], 0x80 );
+		mu_assert_equal( memory.data[0], 0x82 );
+		mu_assert_equal( memory.data[1], 0x81 );
+		mu_assert_equal( memory.data[2], 0x80 );
 		/* 83,84,(00) -> 00,84 */
-		CU_ASSERT_EQUAL( memory.data[3], 0x00 );
-		CU_ASSERT_EQUAL( memory.data[4], 0x84 );
+		mu_assert_equal( memory.data[3], 0x00 );
+		mu_assert_equal( memory.data[4], 0x84 );
 		(void)file_close( &infile );
 	}
 
@@ -604,15 +571,15 @@ static void tc_bldump_reorder(void)
 		opt.data_length   = 7;
 
 		is = bldump_read( &memory, &infile, &opt );
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_EQUAL( memory.size, 6 );
-		CU_ASSERT_EQUAL( memory.data[0], 0x80 );
-		CU_ASSERT_EQUAL( memory.data[1], 0x81 );
-		CU_ASSERT_EQUAL( memory.data[2], 0x82 );
-		CU_ASSERT_EQUAL( memory.data[3], 0x83 );
-		CU_ASSERT_EQUAL( memory.data[4], 0x84 );
-		CU_ASSERT_EQUAL( memory.data[5], 0x80 );
-		CU_ASSERT_EQUAL( memory.data[6], 0x81 );
+		mu_assert_equal( is, true );
+		mu_assert_equal( memory.size, 6 );
+		mu_assert_equal( memory.data[0], 0x80 );
+		mu_assert_equal( memory.data[1], 0x81 );
+		mu_assert_equal( memory.data[2], 0x82 );
+		mu_assert_equal( memory.data[3], 0x83 );
+		mu_assert_equal( memory.data[4], 0x84 );
+		mu_assert_equal( memory.data[5], 0x80 );
+		mu_assert_equal( memory.data[6], 0x81 );
 
 		(void)file_close( &infile );
 	}
@@ -620,26 +587,34 @@ static void tc_bldump_reorder(void)
 
 }
 
-CU_ErrorCode ts_bldump_regist(void)
+void ts_bldump(void)
 {
-	CU_TestInfo ts_bldump_cases[] = {
-		{ "help()"                    , tc_help }         , 
-		{ "strfree()"                 , tc_strfree }      , 
-		{ "bldump_setup()"            , tc_bldump_setup } , 
-		{ "bldump_read()"             , tc_bldump_read }  , 
-		{ "bldump_read(reordering)"   , tc_bldump_reorder } ,
-		{ "bldump_write(HEXADECIMAL)" , tc_bldump_hexadecimal }   , 
-		{ "bldump_write(DECIMAL)"     , tc_bldump_decimal }   , 
-		{ "bldump_write(UDECIMAL)"    , tc_bldump_udecimal }   , 
-		{ "bldump_write(BINARY)"      , tc_bldump_binary }   , 
-		CU_TEST_INFO_NULL
-	};
+	/* init */
+	assert(verbose_out== NULL); //Error: verbose_out is not NULL
+	t_stdin  = tmpfile();
+	t_stdout = tmpfile();
+	t_stderr = tmpfile();
+	verbose_out = tmpfile();
+	assert(t_stdin!= NULL||t_stdout!=NULL||t_stderr!=NULL); //Error: tmpfile() failure
 
-	CU_SuiteInfo suites[] = {
-		{ "bldump", ts_bldump_init, ts_bldump_cleanup, ts_bldump_cases },
-		CU_SUITE_INFO_NULL
-	};
+	/* test */
+	mu_run_test(t_help);
+	mu_run_test(t_strfree);
+	mu_run_test(t_bldump_setup);
+	mu_run_test(t_bldump_read);
+	mu_run_test(t_bldump_reorder);
+	mu_run_test(t_bldump_hexadecimal);
+	mu_run_test(t_bldump_decimal);
+	mu_run_test(t_bldump_udecimal);
+	mu_run_test(t_bldump_binary);
 
-	return CU_register_suites( suites );
+	/* cleanup */
+	(void) fclose( t_stdin  );
+	(void) fclose( t_stdout );
+	(void) fclose( t_stderr );
+	t_stdin = NULL;
+	t_stdout = NULL;
+	t_stderr = NULL;
+	verbose_out = NULL;
 }
 

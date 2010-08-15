@@ -4,7 +4,6 @@
 *.gcda
 *.tmp
 .depend
-CUnit
 bldump
 bldump-test
 bldump.exe

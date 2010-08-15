@@ -6,80 +6,33 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
-#include "CUnit/CUnit.h"
 
+#include "munit.h"
 #include "verbose.h"
 #include "bldump.h"
 
 extern FILE *t_stdin, *t_stdout, *t_stderr;
 extern char* t_tmpname;
 
-static int ts_file_init(void)
-{
-	if ( verbose_out != NULL ) {
-		fprintf( stderr, "Error: verbose_out is not NULL\n" );
-		return 1;
-	}
-
-	t_stdin  = tmpfile();
-	t_stdout = tmpfile();
-	t_stderr = tmpfile();
-	verbose_out = tmpfile();
-
-	if ( t_stdin == NULL || t_stdout == NULL || t_stderr == NULL ) {
-		fprintf( stderr, "Error: tmpfile() failure - errno = %d.\n", errno );
-		return 1;
-	}
-
-	/* make test file */
-	{
-		FILE* in;
-		in = fopen( t_tmpname, "wt" );
-		assert( in != NULL );
-		fputs( "hello", in );
-		fclose( in );
-	}
-
-	return 0;
-}
-
-static int ts_file_cleanup(void)
-{
-	int val;
-
-	fclose( t_stdin  );
-	fclose( t_stdout );
-	fclose( t_stderr );
-	t_stdin = NULL;
-	t_stdout = NULL;
-	t_stderr = NULL;
-	verbose_out = NULL;
-
-	val = remove( t_tmpname );
-	assert( val == 0 );
-
-	return 0;
-}
-
 /*!
  * @brief test of file_reset.
  */
-static void tc_file_reset(void)
+static void t_file_reset(void)
 {
 	file_t file;
 
 	memset( &file, 0xcc, sizeof(file_t) );
 	file_reset( &file );
-	CU_ASSERT_PTR_NULL( file.ptr  );
-	CU_ASSERT_PTR_NULL( file.name );
-	CU_ASSERT_EQUAL( file.position, 0L );
-	CU_ASSERT_EQUAL( file.length,   0L );
+	mu_assert_ptr_null( file.ptr  );
+	mu_assert_ptr_null( file.name );
+	mu_assert_equal( file.position, 0L );
+	mu_assert_equal( file.length,   0L );
 }
 
 /*!
  * @brief test of file_open.
  */
-static void tc_file_open(void)
+static void t_file_open(void)
 {
 	bool is;
 	file_t file;
@@ -89,24 +42,24 @@ static void tc_file_open(void)
 	/* file_open() - check NULL */
 	{
 		is = file_open( &file, NULL, "rt" );
-		CU_ASSERT_EQUAL( is, false );
-		CU_ASSERT_PTR_NULL( file.name );
+		mu_assert_equal( is, false );
+		mu_assert_ptr_null( file.name );
 	}
 	/* file_open() - non existing file */
 	{
 		char *non_existing = tmpnam(NULL);
 		is = file_open( &file, non_existing, "rt" ); /* non-existing file */
-		CU_ASSERT_EQUAL( is, false );
-		CU_ASSERT_STRING_EQUAL( file.name, non_existing );
+		mu_assert_equal( is, false );
+		mu_assert_string_equal( file.name, non_existing );
 	}
 	/* file_open() - normal file */
 	{
 		is = file_open( &file, t_tmpname, "rt" );
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_STRING_EQUAL( file.name, t_tmpname );
-		CU_ASSERT_PTR_NOT_NULL( file.ptr );
-		CU_ASSERT_EQUAL( file.position, 0L );
-		CU_ASSERT_EQUAL( file.length,   5 );
+		mu_assert_equal( is, true );
+		mu_assert_string_equal( file.name, t_tmpname );
+		mu_assert_ptr_not_null( file.ptr );
+		mu_assert_equal( file.position, 0L );
+		mu_assert_equal( file.length,   5 );
 
 		fclose( file.ptr );
 		file.ptr = NULL;
@@ -118,7 +71,7 @@ static void tc_file_open(void)
 /*!
  * @brief test of file_close.
  */
-static void tc_file_close(void)
+static void t_file_close(void)
 {
 	bool is;
 	file_t file;
@@ -129,20 +82,20 @@ static void tc_file_close(void)
 	/* file_close() - success */
 	{
 		is = file_close( &file );
-		CU_ASSERT_EQUAL( is, true );
-		CU_ASSERT_PTR_NULL( file.ptr );
+		mu_assert_equal( is, true );
+		mu_assert_ptr_null( file.ptr );
 	}
 	/* file_close() - failure */
 	{
 		is = file_close( &file );
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 }
 
 /*!
  * @brief test of file_seek.
  */
-static void tc_file_seek(void)
+static void t_file_seek(void)
 {
 	int val;
 	file_t file;
@@ -153,13 +106,13 @@ static void tc_file_seek(void)
 	/* file_seek() - failure */
 	{
 		val = file_seek( &file, -1 );
-		CU_ASSERT_NOT_EQUAL( val, 0 );
+		mu_assert_not_equal( val, 0 );
 	}
 	/* file_seek() - success */
 	{
 		val = file_seek( &file, 3 );
-		CU_ASSERT_EQUAL( val, 0 );
-		CU_ASSERT_EQUAL( file.position, 3 );
+		mu_assert_equal( val, 0 );
+		mu_assert_equal( file.position, 3 );
 	}
 
 	file_close( &file );
@@ -168,7 +121,7 @@ static void tc_file_seek(void)
 /*!
  * @brief test of file_read.
  */
-static void tc_file_read(void)
+static void t_file_read(void)
 {
 	bool is;
 	file_t file;
@@ -183,18 +136,18 @@ static void tc_file_read(void)
 	file_seek( &file, 1 );
 
 	is = file_read( &file, &memory, 2 );
-	CU_ASSERT_EQUAL( is,             true );
-	CU_ASSERT_EQUAL( file.position,  3 );
-	CU_ASSERT_EQUAL( memory.address, 1 );
-	CU_ASSERT_EQUAL( memory.size,    2 );
+	mu_assert_equal( is,             true );
+	mu_assert_equal( file.position,  3 );
+	mu_assert_equal( memory.address, 1 );
+	mu_assert_equal( memory.size,    2 );
 
 	is = file_read( &file, &memory, 2 );
-	CU_ASSERT_EQUAL( is,             true );
-	CU_ASSERT_EQUAL( file.position,  5 );
-	CU_ASSERT_EQUAL( memory.address, 1 ); /* not changed */
+	mu_assert_equal( is,             true );
+	mu_assert_equal( file.position,  5 );
+	mu_assert_equal( memory.address, 1 ); /* not changed */
 
 	is = file_read( &file, &memory, 0 );
-	CU_ASSERT_EQUAL( is, false );
+	mu_assert_equal( is, false );
 	
 	file_close( &file );
 	memory_free( &memory );
@@ -203,7 +156,7 @@ static void tc_file_read(void)
 /*!
  * @brief test of file_write.
  */
-static void tc_file_write(void)
+static void t_file_write(void)
 {
 	file_t file;
 	memory_t memory;
@@ -218,7 +171,7 @@ static void tc_file_write(void)
 	file_reset( &file );
 	file_open( &file, t_tmpname, "wt" );
 	file_write( &file, &memory );
-	CU_ASSERT( file.length == 3 );
+	mu_assert( file.length == 3 );
 	file_close( &file );
 
 	memory_free( &memory );
@@ -227,8 +180,8 @@ static void tc_file_write(void)
 		FILE* in=fopen(t_tmpname,"rt");
 		char t[10];
 		val = fread( t, 1, 10, in );
-		CU_ASSERT_EQUAL( val, 3 );
-		CU_ASSERT_NSTRING_EQUAL( t, "foo", 3 );
+		mu_assert_equal( val, 3 );
+		mu_assert_nstring_equal( t, "foo", 3 );
 		fclose(in);
 	}
 }
@@ -236,7 +189,7 @@ static void tc_file_write(void)
 /*!
  * @brief test of file_search.
  */
-static void tc_file_search(void)
+static void t_file_search(void)
 {
 	bool is;
 	file_t file;
@@ -259,12 +212,12 @@ static void tc_file_search(void)
 		opt.search_length  = 16;
 
 		is = file_search( &file, &memory, &opt );
-		CU_ASSERT_EQUAL( is,             true );
-		CU_ASSERT_EQUAL( file.position,  4 );
-		CU_ASSERT_EQUAL( memory.address, 2 );
-		CU_ASSERT_EQUAL( memory.size,    2 );
-		CU_ASSERT_EQUAL( memory.data[0], 0x6c );
-		CU_ASSERT_EQUAL( memory.data[1], 0x6c );
+		mu_assert_equal( is,             true );
+		mu_assert_equal( file.position,  4 );
+		mu_assert_equal( memory.address, 2 );
+		mu_assert_equal( memory.size,    2 );
+		mu_assert_equal( memory.data[0], 0x6c );
+		mu_assert_equal( memory.data[1], 0x6c );
 	}
 
 	/* detect EOF on charging */
@@ -273,14 +226,14 @@ static void tc_file_search(void)
 		opt.search_pattern = 0x6c6c;
 		opt.search_length  = 16;
 		is = file_search( &file, &memory, &opt );
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 
 	/* detect EOF before charging */
 	{
 		memory_clear( &memory );
 		is = file_search( &file, &memory, &opt );
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 
 	/* detect EOF on searching */
@@ -292,7 +245,7 @@ static void tc_file_search(void)
 		opt.search_pattern = 0xAAAA; //not existing
 		opt.search_length  = 16;
 		is = file_search( &file, &memory, &opt );
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 
 	/* detect end_address on charging */
@@ -305,7 +258,7 @@ static void tc_file_search(void)
 		opt.search_length  = 16;
 		opt.end_address    = 1;
 		is = file_search( &file, &memory, &opt );
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 
 	/* detect end_address on charging */
@@ -318,7 +271,7 @@ static void tc_file_search(void)
 		opt.search_length  = 16;
 		opt.end_address    = 3;
 		is = file_search( &file, &memory, &opt );
-		CU_ASSERT_EQUAL( is, false );
+		mu_assert_equal( is, false );
 	}
 
 	file_close( &file );
@@ -326,24 +279,45 @@ static void tc_file_search(void)
 }
 
 
-CU_ErrorCode ts_file_regist(void)
+void ts_file(void)
 {
-	CU_TestInfo ts_file_cases[] = {
-		{ "file_reset()" , tc_file_reset } , 
-		{ "file_open()"  , tc_file_open }  , 
-		{ "file_close()" , tc_file_close } , 
-		{ "file_seek()"  , tc_file_seek }  , 
-		{ "file_read()"  , tc_file_read }  , 
-		{ "file_search()", tc_file_search } ,
-		{ "file_write()" , tc_file_write } ,  // this test overwrite t_tmpname file.
-		CU_TEST_INFO_NULL
-	};
+	/* init */
+	assert(verbose_out == NULL ); //Error: verbose_out is not NULL
+	t_stdin  = tmpfile();
+	t_stdout = tmpfile();
+	t_stderr = tmpfile();
+	verbose_out = tmpfile();
+	assert(t_stdin!=NULL||t_stdout!=NULL||t_stderr!=NULL);//Error: tmpfile() failure
 
-	CU_SuiteInfo suites[] = {
-		{ "file", ts_file_init, ts_file_cleanup, ts_file_cases },
-		CU_SUITE_INFO_NULL
-	};
+	/* make test file */
+	{
+		FILE* in;
+		in = fopen( t_tmpname, "wt" );
+		assert( in != NULL );
+		fputs( "hello", in );
+		fclose( in );
+	}
 
-	return CU_register_suites( suites );
+	/* test */
+	mu_run_test(t_file_reset);
+	mu_run_test(t_file_open);
+	mu_run_test(t_file_close);
+	mu_run_test(t_file_seek);
+	mu_run_test(t_file_read);
+	mu_run_test(t_file_search);
+	mu_run_test(t_file_write); // this test overwrite t_tmpname file.
+
+	/* cleanup */
+	int val;
+	fclose( t_stdin  );
+	fclose( t_stdout );
+	fclose( t_stderr );
+	t_stdin = NULL;
+	t_stdout = NULL;
+	t_stderr = NULL;
+	verbose_out = NULL;
+	val = remove( t_tmpname );
+	assert( val == 0 );
+	return;
 }
 

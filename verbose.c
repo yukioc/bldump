@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#ifdef CUNIT
+#ifdef TEST
 void t_exit(int);
 #define EXIT t_exit
 #else
