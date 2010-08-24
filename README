@@ -110,6 +110,9 @@ INSTALLATION
 
 HISTORY
 
+  v.1.0.1
+    * Modified wrong byte order of searched data reordering.
+
   v.1.0
     * '-A' display character.
 
